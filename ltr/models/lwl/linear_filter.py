@@ -73,7 +73,8 @@ class LinearFilter(nn.Module):
         return mask_encoding
 
     def get_filter(self, feat, train_label, train_sw, num_objects=None, *args, **kwargs):
-        """ Get the initial target model parameters given the few-shot labels """
+        """ Get the initial target model parameters given the few-shot labels """       
+
         if num_objects is None:
             weights = self.filter_initializer(feat, train_label)
         else:
