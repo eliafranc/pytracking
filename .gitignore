@@ -4,6 +4,7 @@
 *.pyc
 *.pytest_cache
 *.ipynb_checkpoints/
+workspace/
 ltr/admin/local.py
 ltr/run_ltr_local.py
 ltr/train_settings/*/debug.py
