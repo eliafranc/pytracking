@@ -11,6 +11,9 @@ This builds the pytracking image and sets up a user in the container with the sa
 ```
 
 ### Running the docker
+Depending on what kind of directories should be mounted, the *docker run* command should be adjusted. Any mound can be 
+specified with the -v flag. 
+
 ```bash
 docker run -it --gpus all -v /home/${USER}/.Xauthority:/home/${USER}/.Xauthority -e DISPLAY -v /tmp/.X11-unix/:/tmp/.X11-unix/ -v /home/${USER}/elia_franc_329:/home/${USER}/code -v /home/${USER}/dataset_processing/drone_dataset_split:/home/${USER}/drone_dataset_split -v /datasets/EV_UAV2:/home/${USER}/EV_UAV2 --rm --net=host pytracking_${USER} bash
 
