@@ -2,8 +2,8 @@ Pytracking
 =========================
 
 Slightly modified version of the [pytracking](https://github.com/visionml/pytracking) repository.
-In order to use use any of the trackers, it is necessary to build the [pytracking-docker](../pytracking-docker).
-Follow the steps described in the [README.md](../pytracking-docker/README.md) and find the mounted project repository in the docker root directory, once it is running.
+In order to use use any of the trackers, it is necessary to build the pytracking docker container.
+Follow the steps described in the [README.md](docker/README.md) and find the mounted project repository in the docker root directory, once it is running.
 
 ### Before Running a Tracker
 To finalize the setup of pytracking make sure to run the [install script](install.sh). The install script downloads the 
