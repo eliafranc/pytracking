@@ -1,0 +1,18 @@
+version: "3"
+
+services:
+  app:
+    image: pytracking_${USER}
+    network_mode: "host"
+    build: .
+    environment:
+      - DISPLAY=${DISPLAY}
+    volumes:
+      - /home/${USER}/.Xauthority:/home/${USER}/.Xauthority
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - /home/${USER}/elia_franc_329:/home/${USER}/code
+      - /datasets/EV_UAV2:/home/${USER}/EV_UAV2
+      - /home/${USER}/dataset_processing/drone_dataset_split:/home/${USER}/drone_dataset_split
+    stdin_open: true
+    tty: true
+    command: /bin/bash
