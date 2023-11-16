@@ -22,6 +22,7 @@ class MultiObjectWrapper:
 
     def create_tracker(self):
         tracker = None
+
         if self.fast_load:
             try:
                 tracker = copy.deepcopy(self.tracker_copy)

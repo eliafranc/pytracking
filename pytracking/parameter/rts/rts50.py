@@ -28,7 +28,6 @@ def parameters():
                                      )
 
     params.sta_net.load_network()
-
     ##########################################
     # Segmentation Branch parameters
     ##########################################
@@ -62,7 +61,7 @@ def parameters():
                                  fusion_type="add"
                                  )
     params.net.load_network()
-    
+
     ##########################################
     # Classifier Branch parameters
     ##########################################

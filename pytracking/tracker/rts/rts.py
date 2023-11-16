@@ -30,7 +30,6 @@ class RTS(BaseTracker):
         self.frame_num = 1
         if not self.params.has('device'):
             self.params.device = 'cuda' if self.params.use_gpu else 'cpu'
-
         # Initialize network
         self.initialize_features()
 
@@ -665,7 +664,6 @@ class RTS(BaseTracker):
 
         with torch.no_grad():
             few_shot_label, few_shot_sw = self.net.label_encoder(init_masks, x.unsqueeze(1))
-
         # Get the target module parameters using the few-shot learner
         with torch.no_grad():
             self.target_filter, _, losses = self.net.target_model.get_filter(x.unsqueeze(1), few_shot_label,

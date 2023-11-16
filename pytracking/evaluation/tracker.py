@@ -282,7 +282,7 @@ class Tracker:
             if hasattr(tracker, 'initialize_features'):
                 tracker.initialize_features()
         elif multiobj_mode == 'parallel':
-            tracker = MultiObjectWrapper(self.tracker_class, params, self.visdom, fast_load=True)
+            tracker = MultiObjectWrapper(self.tracker_class, params, self.visdom, fast_load=False)
         else:
             raise ValueError('Unknown multi object mode {}'.format(multiobj_mode))
 
@@ -346,6 +346,7 @@ class Tracker:
         if optional_box is not None:
             assert isinstance(optional_box, (list, tuple))
             assert len(optional_box) == 4, "valid box's format is [x,y,w,h]"
+            print('Should not print.')
 
             out = tracker.initialize(frame, {'init_bbox': OrderedDict({next_object_id: optional_box}),
                                        'init_object_ids': [next_object_id, ],
@@ -393,6 +394,7 @@ class Tracker:
             if len(sequence_object_ids) > 0:
                 info['sequence_object_ids'] = sequence_object_ids
                 out = tracker.track(frame, info)
+
                 prev_output = OrderedDict(out)
 
                 if 'segmentation' in out:

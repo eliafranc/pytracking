@@ -45,7 +45,6 @@ class ClassifierBranch:
 
         # Extract and transform init samples
         init_backbone_feat = self.generate_init_samples(image)
-
         # Initialize classifier
         self.init_classifier(init_backbone_feat)
 
