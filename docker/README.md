@@ -16,6 +16,6 @@ This builds the pytracking image and sets up a user in the container with the sa
 Depending on what kind of directories should be mounted, the _docker run_ command should be adjusted. Any mount can be specified with the -v flag. To just mount the pytracking code run the following command from the directory the repository root is located:
 
 ```bash
-docker run -it --gpus all -v /home/${USER}/.Xauthority:/home/${USER}/.Xauthority -e DISPLAY -v /tmp/.X11-unix/:/tmp/.X11-unix/ -v ${PWD}/pytracking/:/home/${USER}/pytracking --rm --net=host pytracking_${USER} bash
+docker run -it --gpus all -e DISPLAY -v /home/${USER}/.Xauthority:/home/${USER}/.Xauthority -v /tmp/.X11-unix/:/tmp/.X11-unix/ -v ${PWD}/pytracking/:/home/${USER}/pytracking --rm --net=host pytracking_${USER} bash
 
 ```
