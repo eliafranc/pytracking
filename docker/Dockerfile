@@ -17,7 +17,7 @@ ENV LD_LIBRARY_PATH /usr/local/nvidia/lib:/usr/local/nvidia/lib64
 RUN apt update -y && apt upgrade -y && apt install -y \
     apt-utils \
     build-essential \
-    oftware-properties-common \
+    software-properties-common \
     wget \
     unzip \
     curl \
@@ -45,7 +45,9 @@ RUN apt update -y && apt upgrade -y && apt install -y \
     python3-pip \
     python3-tk \
     python3-dev \
-    ninja-build
+    ninja-build \
+    libturbojpeg \
+    x11-apps
 
 RUN python3 -m pip install --upgrade pip && python3 -m pip install \
     torch \
@@ -67,11 +69,7 @@ RUN python3 -m pip install --upgrade pip && python3 -m pip install \
     pycocotools \
     lvis \
     jpeg4py \
-    pyqt5-tools
-
-RUN apt install -y ninja-build \
-    libturbojpeg \
-    x11-apps
+    pyqt5-tools    
 
 RUN useradd -u $user_id -ms /bin/bash $username && usermod -aG sudo $username \
     && echo "$username:$password" | chpasswd
