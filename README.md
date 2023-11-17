@@ -1,10 +1,12 @@
 # Pytracking
 
 Slightly modified version of the [pytracking](https://github.com/visionml/pytracking) repository.
-Make sure to clone this repository with the  **--recurse_submodules** flag:
+Make sure to clone this repository with the  **--recurse_submodules** flag  and initialize the submodules:
 
 ```bash
 git clone --recurse-submodules <link-to-repo>
+cd pytracking
+git submodule update --init --recursive
 
 ```
 
