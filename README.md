@@ -1,6 +1,13 @@
 # Pytracking
 
 Slightly modified version of the [pytracking](https://github.com/visionml/pytracking) repository.
+Make sure to clone this repository with the  **--recurse_submodules** flag:
+
+```bash
+git clone --recurse-submodules <link-to-repo>
+
+```
+
 In order to use use any of the trackers, it is necessary to build the pytracking docker container.
 Follow the steps described in the [README.md](docker/README.md) and find the mounted project repository in the docker root directory, once it is running.
 
