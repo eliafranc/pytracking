@@ -16,3 +16,6 @@ pytracking/result_plots/
 pytracking/evaluation/local.py
 pytracking/run_local.py
 .vscode/
+pytracking/experiments/pure_event_samples/
+.gitignore
+pytracking/experiments/07v58r01.mp4
