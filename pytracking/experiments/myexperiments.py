@@ -1,4 +1,4 @@
-from pytracking.evaluation import Tracker, get_dataset, trackerlist
+from pytracking.pytracking.evaluation import Tracker, get_dataset, trackerlist
 
 
 def atom_nfs_uav():

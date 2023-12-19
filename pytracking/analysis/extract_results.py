@@ -2,7 +2,7 @@ import os
 import sys
 import importlib
 import numpy as np
-from pytracking.utils.load_text import load_text
+from pytracking.pytracking.utils.load_text import load_text
 import torch
 import pickle
 from tqdm import tqdm

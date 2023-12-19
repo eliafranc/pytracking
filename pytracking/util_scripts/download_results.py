@@ -10,7 +10,7 @@ env_path = os.path.join(os.path.dirname(__file__), '../..')
 if env_path not in sys.path:
     sys.path.append(env_path)
 
-from pytracking.evaluation.environment import env_settings
+from pytracking.pytracking.evaluation.environment import env_settings
 
 pytracking_results_link_dict = {
     "dimp": {

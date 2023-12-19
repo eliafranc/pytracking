@@ -7,9 +7,9 @@ from tqdm import tqdm
 from collections import defaultdict
 
 sys.path.append('../..')
-from pytracking.evaluation import get_dataset, Tracker
-import ltr.data.processing_utils as prutils
-from pytracking import dcf
+from pytracking.pytracking.evaluation import get_dataset, Tracker
+import pytracking.ltr.data.processing_utils as prutils
+from pytracking.pytracking import dcf
 
 
 def load_dump_seq_data_from_disk(path):

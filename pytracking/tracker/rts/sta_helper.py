@@ -2,8 +2,8 @@ import torch
 import torch.nn.functional as F
 import numpy as np
 import math
-from pytracking.features.preprocessing import numpy_to_torch
-from pytracking.features.preprocessing import sample_patch
+from pytracking.pytracking.features.preprocessing import numpy_to_torch
+from pytracking.pytracking.features.preprocessing import sample_patch
 
 
 class STAHelper:

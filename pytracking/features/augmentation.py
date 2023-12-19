@@ -4,7 +4,7 @@ import torch
 import torch.nn.functional as F
 import cv2 as cv
 import random
-from pytracking.features.preprocessing import numpy_to_torch, torch_to_numpy
+from pytracking.pytracking.features.preprocessing import numpy_to_torch, torch_to_numpy
 
 
 class Transform:

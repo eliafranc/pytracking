@@ -1,7 +1,7 @@
 import numpy as np
 import os
 import shutil
-from pytracking.evaluation.environment import env_settings
+from pytracking.pytracking.evaluation.environment import env_settings
 
 
 def pack_got10k_results(tracker_name, param_name, output_name):

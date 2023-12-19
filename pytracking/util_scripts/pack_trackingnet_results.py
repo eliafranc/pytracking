@@ -1,8 +1,8 @@
 import numpy as np
 import os
 import shutil
-from pytracking.evaluation.environment import env_settings
-from pytracking.evaluation.datasets import get_dataset
+from pytracking.pytracking.evaluation.environment import env_settings
+from pytracking.pytracking.evaluation.datasets import get_dataset
 
 
 def pack_trackingnet_results(tracker_name, param_name, run_id=None, output_name=None):

@@ -1,5 +1,5 @@
 import torch
-from pytracking.utils.loading import load_network
+from pytracking.pytracking.utils.loading import load_network
 
 
 class NetWrapper:

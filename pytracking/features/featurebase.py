@@ -1,6 +1,6 @@
 import torch
 import torch.nn.functional as F
-from pytracking import TensorList
+from pytracking.pytracking import TensorList
 
 
 class FeatureBase:

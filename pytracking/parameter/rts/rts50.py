@@ -1,5 +1,5 @@
-from pytracking.utils import TrackerParams
-from pytracking.features.net_wrappers import NetWithBackbone
+from pytracking.pytracking.utils import TrackerParams
+from pytracking.pytracking.features.net_wrappers import NetWithBackbone
 
 
 def parameters():

@@ -1,5 +1,5 @@
 import torch
-from pytracking.features.featurebase import FeatureBase
+from pytracking.pytracking.features.featurebase import FeatureBase
 
 
 class Concatenate(FeatureBase):

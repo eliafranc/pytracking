@@ -1,17 +1,17 @@
-from pytracking.tracker.base import BaseTracker
+from pytracking.pytracking.tracker.base import BaseTracker
 import torch
 import torch.nn.functional as F
 import numpy as np
 import math
 import time
-from pytracking.tracker.rts.clf_branch import ClassifierBranch
-from pytracking.tracker.rts.sta_helper import STAHelper
-from pytracking import TensorList
-from pytracking.features.preprocessing import numpy_to_torch
-from pytracking.features.preprocessing import sample_patch_multiscale, sample_patch_transformed, sample_patch
-from pytracking.features import augmentation
+from .clf_branch import ClassifierBranch
+from .sta_helper import STAHelper
+from pytracking.pytracking import TensorList
+from pytracking.pytracking.features.preprocessing import numpy_to_torch
+from pytracking.pytracking.features.preprocessing import sample_patch_multiscale, sample_patch_transformed, sample_patch
+from pytracking.pytracking.features import augmentation
 from collections import OrderedDict
-from ltr.data.bounding_box_utils import masks_to_bboxes
+from pytracking.ltr.data.bounding_box_utils import masks_to_bboxes
 
 
 class RTS(BaseTracker):

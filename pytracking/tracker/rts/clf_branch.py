@@ -2,12 +2,12 @@ import torch
 import torch.nn.functional as F
 import math
 
-from pytracking import dcf, TensorList
-from pytracking.features.preprocessing import sample_patch_transformed
-from pytracking.features import augmentation
-from pytracking.utils.plotting import plot_graph
+from pytracking.pytracking import dcf, TensorList
+from pytracking.pytracking.features.preprocessing import sample_patch_transformed
+from pytracking.pytracking.features import augmentation
+from pytracking.pytracking.utils.plotting import plot_graph
 
-from ltr.models.layers import activation
+from pytracking.ltr.models.layers import activation
 
 
 class ClassifierBranch:

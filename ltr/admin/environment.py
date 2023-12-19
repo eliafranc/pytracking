@@ -4,7 +4,7 @@ from collections import OrderedDict
 
 
 def create_default_local_file():
-    path = os.path.join(os.path.dirname(__file__), 'local.py')
+    path = os.path.join('/app/pytracking/ltr/admin', 'local.py')
 
     empty_str = '\'\''
     default_settings = OrderedDict({
@@ -45,7 +45,7 @@ def create_default_local_file():
 
 
 def env_settings():
-    env_module_name = 'ltr.admin.local'
+    env_module_name = 'pytracking.ltr.admin.local'
     try:
         env_module = importlib.import_module(env_module_name)
         return env_module.EnvironmentSettings()

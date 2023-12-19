@@ -3,10 +3,10 @@ import numpy as np
 import torch
 import pandas as pd
 from collections import OrderedDict
-from ltr.data.image_loader import imread_indexed
-from pytracking.evaluation import get_dataset
+from pytracking.ltr.data.image_loader import imread_indexed
+from pytracking.pytracking.evaluation import get_dataset
 from pathlib import Path
-from pytracking.analysis.plot_results import generate_formatted_report
+from .plot_results import generate_formatted_report
 
 import pytracking.analysis.vos_utils as utils
 

@@ -6,8 +6,8 @@ import torch
 import pickle
 import json
 import math
-from pytracking.evaluation.environment import env_settings
-from pytracking.analysis.extract_results import extract_results
+from pytracking.pytracking.evaluation.environment import env_settings
+from .extract_results import extract_results
 
 
 def get_plot_draw_styles():

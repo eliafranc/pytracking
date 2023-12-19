@@ -4,7 +4,7 @@ import os
 
 class EnvSettings:
     def __init__(self):
-        pytracking_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+        pytracking_path = '/app/pytracking/pytracking'
 
         self.results_path = '{}/tracking_results/'.format(pytracking_path)
         self.segmentation_path = '{}/segmentation_results/'.format(pytracking_path)
@@ -55,7 +55,7 @@ def create_default_local_file():
 
 
 def env_settings():
-    env_module_name = 'pytracking.evaluation.local'
+    env_module_name = 'pytracking.pytracking.evaluation.local'
     try:
         env_module = importlib.import_module(env_module_name)
         return env_module.local_env_settings()

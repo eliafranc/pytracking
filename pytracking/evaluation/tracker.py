@@ -2,7 +2,7 @@ import importlib
 import os
 import numpy as np
 from collections import OrderedDict
-from pytracking.pytracking.evaluation.environment import env_settings
+from .environment import env_settings
 import time
 import cv2 as cv
 from pytracking.pytracking.utils.visdom import Visdom
@@ -61,7 +61,7 @@ class Tracker:
 
         tracker_module_abspath = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'tracker', self.name))
         if os.path.isdir(tracker_module_abspath):
-            tracker_module = importlib.import_module('pytracking.tracker.{}'.format(self.name))
+            tracker_module = importlib.import_module('pytracking.pytracking.tracker.{}'.format(self.name))
             self.tracker_class = tracker_module.get_tracker_class()
         else:
             self.tracker_class = None

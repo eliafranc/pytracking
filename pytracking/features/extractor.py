@@ -1,6 +1,6 @@
 import torch
-from pytracking.features.preprocessing import sample_patch
-from pytracking import TensorList
+from pytracking.pytracking.features.preprocessing import sample_patch
+from pytracking.pytracking import TensorList
 
 class ExtractorBase:
     """Base feature extractor class.

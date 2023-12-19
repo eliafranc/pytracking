@@ -7,9 +7,9 @@ import time
 import matplotlib.patches as patches
 import cv2 as cv
 import matplotlib.pyplot as plt
-from pytracking.analysis.plot_results import get_plot_draw_styles
-from pytracking.utils.plotting import draw_figure
-from pytracking.evaluation import get_dataset, trackerlist
+from .plot_results import get_plot_draw_styles
+from pytracking.pytracking.utils.plotting import draw_figure
+from pytracking.pytracking.evaluation import get_dataset, trackerlist
 
 env_path = os.path.join(os.path.dirname(__file__), '../..')
 if env_path not in sys.path:
