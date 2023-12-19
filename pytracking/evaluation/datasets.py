@@ -1,6 +1,6 @@
 from collections import namedtuple
 import importlib
-from pytracking.evaluation.data import SequenceList
+from .data import SequenceList
 
 DatasetInfo = namedtuple('DatasetInfo', ['module', 'class_name', 'kwargs'])
 

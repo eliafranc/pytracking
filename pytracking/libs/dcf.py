@@ -1,7 +1,7 @@
 import torch
 import math
-from pytracking import fourier
-from pytracking import complex
+from pytracking.pytracking import fourier
+from pytracking.pytracking import complex
 import torch.nn.functional as F
 
 

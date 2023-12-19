@@ -1,7 +1,7 @@
 import visdom
 import visdom.server
-from pytracking.features.preprocessing import numpy_to_torch
-from pytracking.utils.plotting import show_image_with_boxes, overlay_mask, _pascal_color_map
+from pytracking.pytracking.features.preprocessing import numpy_to_torch
+from .plotting import show_image_with_boxes, overlay_mask, _pascal_color_map
 import cv2
 import torch
 import copy

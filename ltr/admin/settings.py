@@ -1,4 +1,4 @@
-from ltr.admin.environment import env_settings
+from pytracking.ltr.admin.environment import env_settings
 
 
 class Settings:

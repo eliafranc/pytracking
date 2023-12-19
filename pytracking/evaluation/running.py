@@ -5,8 +5,8 @@ import sys
 import csv
 from itertools import product
 from collections import OrderedDict
-from pytracking.evaluation import Sequence, Tracker
-from ltr.data.image_loader import imwrite_indexed
+from . import Sequence, Tracker
+from pytracking.ltr.data.image_loader import imwrite_indexed
 
 
 PREDICTION_FIELD_NAMES = ['video', 'object', 'frame_num', 'present', 'score', 'xmin', 'xmax', 'ymin', 'ymax']

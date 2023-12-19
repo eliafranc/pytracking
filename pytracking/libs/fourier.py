@@ -1,7 +1,7 @@
 import torch
 import torch.nn.functional as F
-from pytracking import complex, TensorList
-from pytracking.libs.tensorlist import tensor_operation
+from pytracking.pytracking import complex, TensorList
+from pytracking.pytracking.libs.tensorlist import tensor_operation
 
 
 @tensor_operation

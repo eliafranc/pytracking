@@ -6,9 +6,9 @@ env_path = os.path.join(os.path.dirname(__file__), '..')
 if env_path not in sys.path:
     sys.path.append(env_path)
 
-from pytracking.evaluation import get_dataset
-from pytracking.evaluation.running import run_dataset
-from pytracking.evaluation import Tracker
+from .evaluation import get_dataset
+from .evaluation.running import run_dataset
+from .evaluation import Tracker
 
 
 def run_tracker(tracker_name, tracker_param, run_id=None, dataset_name='otb', sequence=None, debug=0, threads=0,

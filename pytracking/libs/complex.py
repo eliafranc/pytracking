@@ -1,5 +1,5 @@
 import torch
-from pytracking.libs.tensorlist import tensor_operation
+from pytracking.pytracking.libs.tensorlist import tensor_operation
 
 
 def is_complex(a: torch.Tensor) -> bool:
