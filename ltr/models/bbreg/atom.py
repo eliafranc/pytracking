@@ -1,7 +1,7 @@
 import torch.nn as nn
-import ltr.models.backbone as backbones
-import ltr.models.bbreg as bbmodels
-from ltr import model_constructor
+import pytracking.ltr.models.backbone as backbones
+import pytracking.ltr.models.bbreg as bbmodels
+from pytracking.ltr import model_constructor
 
 
 class ATOMnet(nn.Module):

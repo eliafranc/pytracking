@@ -1,13 +1,13 @@
 import math
 import torch.nn as nn
 from collections import OrderedDict
-import ltr.models.target_classifier.features as clf_features
-import ltr.models.backbone as backbones
-from ltr import model_constructor
+import pytracking.ltr.models.target_classifier.features as clf_features
+import pytracking.ltr.models.backbone as backbones
+from pytracking.ltr import model_constructor
 
-import ltr.models.transformer.transformer as trans
-import ltr.models.transformer.filter_predictor as fp
-import ltr.models.transformer.heads as heads
+import pytracking.ltr.models.transformer.transformer as trans
+import pytracking.ltr.models.transformer.filter_predictor as fp
+import pytracking.ltr.models.transformer.heads as heads
 
 
 class ToMPnet(nn.Module):

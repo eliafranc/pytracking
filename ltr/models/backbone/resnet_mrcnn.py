@@ -5,7 +5,7 @@ import torch
 from collections import OrderedDict
 import torch.utils.model_zoo as model_zoo
 from torchvision.models.resnet import ResNet18_Weights, ResNet50_Weights, ResNet101_Weights
-import ltr.admin.settings as ws_settings
+import pytracking.ltr.admin.settings as ws_settings
 from .base import Backbone
 
 

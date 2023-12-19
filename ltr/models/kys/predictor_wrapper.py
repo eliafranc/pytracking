@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from ltr.models.kys.utils import shift_features
+from .utils import shift_features
 
 
 class PredictorWrapper(nn.Module):

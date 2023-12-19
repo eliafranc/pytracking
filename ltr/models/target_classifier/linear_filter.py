@@ -1,5 +1,5 @@
 import torch.nn as nn
-import ltr.models.layers.filter as filter_layer
+import pytracking.ltr.models.layers.filter as filter_layer
 import math
 
 

@@ -2,7 +2,7 @@ from __future__ import division
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from ltr.models.rts.utils import adaptive_cat, interpolate
+from pytracking.ltr.models.rts.utils import adaptive_cat, interpolate
 from collections import OrderedDict
 
 

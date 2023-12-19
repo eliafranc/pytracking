@@ -2,16 +2,16 @@ import math
 import torch
 import torch.nn as nn
 from collections import OrderedDict
-import ltr.models.target_classifier as target_clf
-import ltr.models.target_classifier.features as clf_features
-import ltr.models.target_classifier.optimizer as clf_optimizer
-import ltr.models.target_classifier.initializer as clf_initializer
-import ltr.models.kys.predictor_wrapper as predictor_wrappers
-import ltr.models.kys.response_predictor as resp_pred
-import ltr.models.kys.cost_volume as cost_volume
-import ltr.models.bbreg as bbmodels
-import ltr.models.backbone as backbones
-from ltr import model_constructor
+import pytracking.ltr.models.target_classifier as target_clf
+import pytracking.ltr.models.target_classifier.features as clf_features
+import pytracking.ltr.models.target_classifier.optimizer as clf_optimizer
+import pytracking.ltr.models.target_classifier.initializer as clf_initializer
+import pytracking.ltr.models.kys.predictor_wrapper as predictor_wrappers
+import pytracking.ltr.models.kys.response_predictor as resp_pred
+import pytracking.ltr.models.kys.cost_volume as cost_volume
+import pytracking.ltr.models.bbreg as bbmodels
+import pytracking.ltr.models.backbone as backbones
+from pytracking.ltr import model_constructor
 
 
 class KYSNet(nn.Module):

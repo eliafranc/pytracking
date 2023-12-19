@@ -1,7 +1,7 @@
 import torch.nn as nn
 import torch
 import torch.nn.functional as F
-from ltr.models.layers.blocks import conv_block
+from pytracking.ltr.models.layers.blocks import conv_block
 from .conv_gru import ConvGRUCell
 
 

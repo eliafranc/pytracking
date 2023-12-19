@@ -1,13 +1,13 @@
 import torch.optim as optim
-from ltr.dataset import YouTubeVOS, Davis, Got10k, Got10kVOS, LasotVOS
-from ltr.data import processing, sampler, LTRLoader
-import ltr.models.rts.rts_net as rts_networks
-import ltr.actors.segmentation as segm_actors
-from ltr.trainers import LTRTrainer
-import ltr.data.transforms as tfm
-from ltr import MultiGPU
-import ltr.models.loss as ltr_losses
-from ltr.admin.loading import load_pretrained
+from pytracking.ltr.dataset import YouTubeVOS, Davis, Got10k, Got10kVOS, LasotVOS
+from pytracking.ltr.data import processing, sampler, LTRLoader
+import pytracking.ltr.models.rts.rts_net as rts_networks
+import pytracking.ltr.actors.segmentation as segm_actors
+from pytracking.ltr.trainers import LTRTrainer
+import pytracking.ltr.data.transforms as tfm
+from pytracking.ltr import MultiGPU
+import pytracking.ltr.models.loss as ltr_losses
+from pytracking.ltr.admin.loading import load_pretrained
 
 import os
 

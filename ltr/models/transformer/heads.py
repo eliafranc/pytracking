@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-import ltr.models.layers.filter as filter_layer
+import pytracking.ltr.models.layers.filter as filter_layer
 
 
 def conv_layer(inplanes, outplanes, kernel_size=3, stride=1, padding=1, dilation=1):

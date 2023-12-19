@@ -463,7 +463,7 @@ class Tracker:
                 np.savetxt(bbox_file, tracked_bb, delimiter='\t', fmt='%d')
 
 
-    def run_video_noninteractive(self, debug=None, visdom_info=None, videofilepath=None, optional_box=None, save_results=True):
+    def run_video_noninteractive(self, debug=None, visdom_info=None, videofilepath=None, optional_box=None):
         """Run the tracker with a provided video file. Output the bounding
         boxes in form of an ordered dictionary that contains a list of
         bounding boxes for each object id.
@@ -505,7 +505,13 @@ class Tracker:
             frame_number += 1
         else:
             cap = cv.VideoCapture(0)
+        
+        frame_width = cap.get(cv.CAP_PROP_FRAME_WIDTH)
+        frame_height = cap.get(cv.CAP_PROP_FRAME_HEIGHT)
 
+        print("======================")
+        print(frame_width, frame_height)
+        print("========================")
 
         next_object_id = 1
         sequence_object_ids = []
@@ -732,7 +738,7 @@ class Tracker:
 
     def get_parameters(self):
         """Get parameters."""
-        param_module = importlib.import_module('pytracking.parameter.{}.{}'.format(self.name, self.parameter_name))
+        param_module = importlib.import_module('pytracking.pytracking.parameter.{}.{}'.format(self.name, self.parameter_name))
         params = param_module.parameters()
         return params
 

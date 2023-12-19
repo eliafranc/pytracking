@@ -5,9 +5,9 @@ from torch import nn
 
 from collections import OrderedDict
 
-from ltr import model_constructor
-import ltr.models.backbone as backbones
-from ltr.models.target_candidate_matching.superglue import SuperGlue
+from pytracking.ltr import model_constructor
+import pytracking.ltr.models.backbone as backbones
+from .superglue import SuperGlue
 
 
 class DescriptorExtractor(nn.Module):

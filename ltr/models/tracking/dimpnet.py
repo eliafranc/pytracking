@@ -2,15 +2,15 @@ import math
 import torch
 import torch.nn as nn
 from collections import OrderedDict
-from ltr.models.meta import steepestdescent
-import ltr.models.target_classifier.linear_filter as target_clf
-import ltr.models.target_classifier.features as clf_features
-import ltr.models.target_classifier.initializer as clf_initializer
-import ltr.models.target_classifier.optimizer as clf_optimizer
-from ltr.models.target_classifier import residual_modules
-import ltr.models.bbreg as bbmodels
-import ltr.models.backbone as backbones
-from ltr import model_constructor
+from pytracking.ltr.models.meta import steepestdescent
+import pytracking.ltr.models.target_classifier.linear_filter as target_clf
+import pytracking.ltr.models.target_classifier.features as clf_features
+import pytracking.ltr.models.target_classifier.initializer as clf_initializer
+import pytracking.ltr.models.target_classifier.optimizer as clf_optimizer
+from pytracking.ltr.models.target_classifier import residual_modules
+import pytracking.ltr.models.bbreg as bbmodels
+import pytracking.ltr.models.backbone as backbones
+from pytracking.ltr import model_constructor
 
 
 class DiMPnet(nn.Module):

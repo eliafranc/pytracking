@@ -1,7 +1,7 @@
 import torch.nn as nn
-import ltr.models.layers.filter as filter_layer
+import pytracking.ltr.models.layers.filter as filter_layer
 import math
-from pytracking import TensorList
+from pytracking.pytracking import TensorList
 
 
 class LinearFilter(nn.Module):

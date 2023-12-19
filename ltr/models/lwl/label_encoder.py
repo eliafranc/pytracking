@@ -1,9 +1,9 @@
 import torch
 import torch.nn as nn
 import math
-from ltr.models.backbone.resnet import BasicBlock
-from ltr.models.layers.blocks import conv_block
-from ltr.models.lwl.utils import interpolate
+from pytracking.ltr.models.backbone.resnet import BasicBlock
+from pytracking.ltr.models.layers.blocks import conv_block
+from pytracking.ltr.models.lwl.utils import interpolate
 
 
 class ResidualDS16SW(nn.Module):

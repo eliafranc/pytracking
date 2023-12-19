@@ -2,7 +2,7 @@ import math
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
-import ltr.models.loss.lovasz_loss as lovasz_loss
+from . import lovasz_loss as lovasz_loss
 
 
 class LovaszSegLoss(nn.Module):

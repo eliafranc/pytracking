@@ -1,8 +1,8 @@
 import math
 import torch
 import torch.nn as nn
-from pytracking import TensorList
-from ltr.models.layers import activation
+from pytracking.pytracking import TensorList
+from pytracking.ltr.models.layers import activation
 
 
 class GNSteepestDescent(nn.Module):

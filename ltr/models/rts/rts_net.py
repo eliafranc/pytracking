@@ -2,25 +2,25 @@ import math
 import torch
 import torch.nn as nn
 from collections import OrderedDict
-import ltr.models.rts.linear_filter as target_clf
-import ltr.models.target_classifier.features as clf_features
-import ltr.models.target_classifier.linear_filter as clf_target_clf
-import ltr.models.target_classifier.initializer as clf_init
-import ltr.models.target_classifier.residual_modules as clf_residual_modules
+from . import linear_filter as target_clf
+import pytracking.ltr.models.target_classifier.features as clf_features
+import pytracking.ltr.models.target_classifier.linear_filter as clf_target_clf
+import pytracking.ltr.models.target_classifier.initializer as clf_init
+import pytracking.ltr.models.target_classifier.residual_modules as clf_residual_modules
 
-import ltr.models.rts.initializer as seg_initializer
-import ltr.models.rts.label_encoder as seg_label_encoder
-import ltr.models.rts.learners_fusion as fusion
-import ltr.models.rts.loss_residual_modules as loss_residual_modules
-import ltr.models.rts.decoder as rts_decoder
-import ltr.models.backbone as backbones
-import ltr.models.backbone.resnet_mrcnn as mrcnn_backbones
-import ltr.models.meta.steepestdescent as steepestdescent
+from . import initializer as seg_initializer
+from . import label_encoder as seg_label_encoder
+from . import learners_fusion as fusion
+from . import loss_residual_modules as loss_residual_modules
+from . import decoder as rts_decoder
+import pytracking.ltr.models.backbone as backbones
+import pytracking.ltr.models.backbone.resnet_mrcnn as mrcnn_backbones
+import pytracking.ltr.models.meta.steepestdescent as steepestdescent
 
-from ltr.models.rts.utils import interpolate
+from .utils import interpolate
 
-from ltr import model_constructor
-from pytracking import TensorList
+from pytracking.ltr import model_constructor
+from pytracking.pytracking import TensorList
 
 
 class RTSNet(nn.Module):

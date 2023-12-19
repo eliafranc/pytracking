@@ -1,7 +1,7 @@
 import torch.nn as nn
 import torch
-from ltr.models.layers.blocks import LinearBlock
-from ltr.external.PreciseRoIPooling.pytorch.prroi_pool import PrRoIPool2D
+from pytracking.ltr.models.layers.blocks import LinearBlock
+from pytracking.ltr.external.PreciseRoIPooling.pytorch.prroi_pool import PrRoIPool2D
 
 
 def conv(in_planes, out_planes, kernel_size=3, stride=1, padding=1, dilation=1):

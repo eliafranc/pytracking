@@ -2,7 +2,7 @@ from __future__ import division
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from ltr.models.lwl.utils import adaptive_cat, interpolate
+from .utils import adaptive_cat, interpolate
 from collections import OrderedDict
 
 

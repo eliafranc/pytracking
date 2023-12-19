@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from ltr.models.transformer.position_encoding import PositionEmbeddingSine
+from .position_encoding import PositionEmbeddingSine
 
 
 def MLP(channels, do_bn=True):

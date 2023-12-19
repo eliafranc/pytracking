@@ -1,10 +1,10 @@
 import torch
 import torch.nn as nn
 import math
-import ltr.models.layers.filter as filter_layer
-import ltr.models.layers.activation as activation
-from ltr.models.layers.distance import DistanceMap
-from pytracking import TensorList
+import pytracking.ltr.models.layers.filter as filter_layer
+import pytracking.ltr.models.layers.activation as activation
+from pytracking.ltr.models.layers.distance import DistanceMap
+from pytracking.pytracking import TensorList
 
 
 class LinearFilterLearnGen(nn.Module):

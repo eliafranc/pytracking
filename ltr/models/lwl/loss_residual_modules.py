@@ -1,8 +1,8 @@
 import torch
 import torch.nn as nn
 import math
-import ltr.models.layers.filter as filter_layer
-from pytracking import TensorList
+import pytracking.ltr.models.layers.filter as filter_layer
+from pytracking.pytracking import TensorList
 
 
 class LWTLResidual(nn.Module):

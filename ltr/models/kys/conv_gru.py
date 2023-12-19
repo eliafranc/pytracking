@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from ltr.models.layers.blocks import conv_block
+from pytracking.ltr.models.layers.blocks import conv_block
 
 
 class ConvGRUCell(nn.Module):

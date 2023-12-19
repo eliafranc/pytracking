@@ -1,9 +1,9 @@
 import torch.nn as nn
 import torch
 import torch.nn.functional as F
-import ltr.models.layers.filter as filter_layer
-import ltr.models.layers.activation as activation
-from ltr.models.layers.distance import DistanceMap
+import pytracking.ltr.models.layers.filter as filter_layer
+import pytracking.ltr.models.layers.activation as activation
+from pytracking.ltr.models.layers.distance import DistanceMap
 import math
 
 
