@@ -498,20 +498,13 @@ class Tracker:
         frame_number = 0
 
         if videofilepath is not None:
-            assert os.path.isfile(videofilepath), "Invalid param {}".format(videofilepath)
-            ", videofilepath must be a valid videofile"
+            # assert os.path.isfile(videofilepath), "Invalid param {}".format(videofilepath)
+            # ", videofilepath must be a valid videofile"
             cap = cv.VideoCapture(videofilepath)
             _, frame = cap.read()
             frame_number += 1
         else:
             cap = cv.VideoCapture(0)
-        
-        frame_width = cap.get(cv.CAP_PROP_FRAME_WIDTH)
-        frame_height = cap.get(cv.CAP_PROP_FRAME_HEIGHT)
-
-        print("======================")
-        print(frame_width, frame_height)
-        print("========================")
 
         next_object_id = 1
         sequence_object_ids = []
