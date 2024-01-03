@@ -463,7 +463,7 @@ class Tracker:
                 np.savetxt(bbox_file, tracked_bb, delimiter='\t', fmt='%d')
 
 
-    def run_video_noninteractive(self, debug=None, visdom_info=None, videofilepath=None, optional_box=None):
+    def run_video_noninteractive(self, debug=None, visdom_info=None, videocapture=None, init_frame=1, optional_box=None):
         """Run the tracker with a provided video file. Output the bounding
         boxes in form of an ordered dictionary that contains a list of
         bounding boxes for each object id.
@@ -495,16 +495,14 @@ class Tracker:
         else:
             raise ValueError('Unknown multi object mode {}'.format(multiobj_mode))
 
-        frame_number = 0
+        frame_number = init_frame
 
-        if videofilepath is not None:
+        if videocapture is not None:
             # assert os.path.isfile(videofilepath), "Invalid param {}".format(videofilepath)
             # ", videofilepath must be a valid videofile"
-            cap = cv.VideoCapture(videofilepath)
-            _, frame = cap.read()
-            frame_number += 1
+            _, frame = videocapture.read()
         else:
-            cap = cv.VideoCapture(0)
+            videocapture = cv.VideoCapture(0)
 
         next_object_id = 1
         sequence_object_ids = []
@@ -529,13 +527,13 @@ class Tracker:
         next_object_id += 1
 
         # Wait for initial bounding box if video!
-        paused = videofilepath is not None
+        paused = videocapture is not None
 
         while True:
 
             if not paused:
                 # Capture frame-by-frame
-                _, frame = cap.read()
+                _, frame = videocapture.read()
                 frame_number += 1
                 if frame is None:
                     break
@@ -563,7 +561,7 @@ class Tracker:
                 break
 
         # When everything done, release the capture
-        cap.release()
+        videocapture.release()
 
         return output_boxes
 
