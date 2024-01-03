@@ -463,7 +463,7 @@ class Tracker:
                 np.savetxt(bbox_file, tracked_bb, delimiter='\t', fmt='%d')
 
 
-    def run_video_noninteractive(self, debug=None, visdom_info=None, videocapture=None, init_frame=1, optional_box=None):
+    def run_video_noninteractive(self, debug=None, visdom_info=None, videofilepath=None, init_frame=1, optional_box=None):
         """Run the tracker with a provided video file. Output the bounding
         boxes in form of an ordered dictionary that contains a list of
         bounding boxes for each object id.
@@ -495,22 +495,24 @@ class Tracker:
         else:
             raise ValueError('Unknown multi object mode {}'.format(multiobj_mode))
 
-        frame_number = init_frame
+        cap = cv.VideoCapture(videofilepath)
 
-        if videocapture is not None:
-            # assert os.path.isfile(videofilepath), "Invalid param {}".format(videofilepath)
-            # ", videofilepath must be a valid videofile"
-            _, frame = videocapture.read()
-        else:
-            videocapture = cv.VideoCapture(0)
+        # Skip to first frame with bounding box
+        countdown = init_frame - 1
+        while countdown > 0:
+            cap.read()
+            countdown -= 1
+        _, frame = cap.read()
 
+        current_frame = init_frame
+        temp_frame_cutoff = init_frame + 200
         next_object_id = 1
         sequence_object_ids = []
         prev_output = OrderedDict()
         output_boxes = OrderedDict()
         output_masks = OrderedDict()
 
-        assert optional_box is not None, "No initial bounding box provided."  
+        assert optional_box is not None, "No initial bounding box provided."
         assert isinstance(optional_box, (list, tuple))
         assert len(optional_box) == 4, "valid box's format is [x,y,w,h]"
 
@@ -525,16 +527,13 @@ class Tracker:
         output_masks[next_object_id] = [None, ]
         sequence_object_ids.append(next_object_id)
         next_object_id += 1
-
-        # Wait for initial bounding box if video!
-        paused = videocapture is not None
+        end_tracker = False
 
         while True:
 
-            if not paused:
+            if init_frame != current_frame:
                 # Capture frame-by-frame
-                _, frame = videocapture.read()
-                frame_number += 1
+                _, frame = cap.read()
                 if frame is None:
                     break
 
@@ -550,18 +549,20 @@ class Tracker:
                 if 'target_bbox' in out:
                     for obj_id, state in out['target_bbox'].items():
                         state = [int(s) for s in state]
+                        if np.all(np.asarray(state) == np.asarray([0, 0, 1, 1])):
+                            end_tracker = True
+                            break
                         output_boxes[obj_id].append(state)
 
                 if 'segmentation' in out:
                     output_masks[obj_id].append(out['segmentation'])
 
-            # After first frame, let the tracker run on the rest of the video.
-            paused = False
-            if frame_number == 10:
+            if end_tracker or current_frame == temp_frame_cutoff:
                 break
 
-        # When everything done, release the capture
-        videocapture.release()
+            current_frame += 1
+
+        cap.release()
 
         return output_boxes
 
