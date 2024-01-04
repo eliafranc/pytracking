@@ -472,18 +472,15 @@ class Tracker:
             debug: Debug level.
         """
 
+        # Tracker parameter setup
         params = self.get_parameters()
-
         debug_ = debug
         if debug is None:
             debug_ = getattr(params, 'debug', 0)
         params.debug = debug_
-
         params.tracker_name = self.name
         params.param_name = self.parameter_name
-
         self._init_visdom(visdom_info, debug_)
-
         multiobj_mode = getattr(params, 'multiobj_mode', getattr(self.tracker_class, 'multiobj_mode', 'default'))
 
         if multiobj_mode == 'default':
@@ -505,7 +502,6 @@ class Tracker:
         # Set up dictionaries and lists for tracking
         sequence_keys = list(sequences.keys())
         object_id = sequence_keys[0]
-        total_objects = len(sequence_keys)
         optional_box = sequences.get(object_id).get('bbox')
         sequence_object_ids = [object_id]
         output_boxes = OrderedDict()
@@ -514,22 +510,21 @@ class Tracker:
         for obj_id in sequence_keys:
             end_tracker[obj_id] = False
 
-        # Skip to first frame with bounding box
+        # Skip to first frame with bounding box and set current frame
         init_frame = sequences.get(object_id).get('init_frame')
+        current_frame = init_frame
+        temp_frame_cutoff = init_frame + 155  # TODO: remove when ready
         countdown = init_frame - 1
         while countdown > 0:
             cap.read()
             countdown -= 1
         _, frame = cap.read()
 
-        current_frame = init_frame
-        temp_frame_cutoff = init_frame + 155
-
         # Initialize tracker for object appearing first
         out = tracker.initialize(frame, {'init_bbox': OrderedDict({object_id: optional_box}),
-                                    'init_object_ids': [object_id, ],
-                                    'object_ids': [object_id, ],
-                                    'sequence_object_ids': [object_id, ]})
+                                         'init_object_ids': [object_id, ],
+                                         'object_ids': [object_id, ],
+                                         'sequence_object_ids': [object_id, ]})
 
         prev_output = OrderedDict(out)
         output_boxes[object_id] = [optional_box, ]
@@ -546,7 +541,7 @@ class Tracker:
             info['previous_output'] = prev_output
 
             # Check if there are any new objects to track
-            if total_objects > len(list(output_boxes.keys())):
+            if len(sequence_keys) > len(list(output_boxes.keys())):
                 next_object_id = sequence_keys[len(list(output_boxes.keys()))]
                 if current_frame == sequences.get(next_object_id)['init_frame']:
                     bbox = sequences.get(next_object_id).get('bbox')
@@ -565,18 +560,15 @@ class Tracker:
 
                 if 'target_bbox' in out:
                     for obj_id, state in out['target_bbox'].items():
+                        state = [int(s) for s in state]
+
                         # Check if the tracker for the object has ended and skip if yes
                         if end_tracker[obj_id]:
                             continue
 
-                        state = [int(s) for s in state]
-
                         # If bounding box infeasible stop tracker for object
                         if np.all(np.asarray(state) == np.asarray([0, 0, 1, 1])):
-                            # TODO: not break but remove the object from the info
-                            # object that governs the tracking
                             end_tracker[obj_id] = True
-                            #sequence_object_ids.remove(obj_id)
                             break
 
                         output_boxes[obj_id].append(state)
@@ -585,6 +577,7 @@ class Tracker:
                     output_masks[obj_id].append(out['segmentation'])
 
             # Break tracking loop if all objects have ended or if the frame limit is reached
+            # TODO: remove frame limit when ready
             if current_frame == temp_frame_cutoff or np.all(np.asarray(list(end_tracker.values()))):
                 break
 
