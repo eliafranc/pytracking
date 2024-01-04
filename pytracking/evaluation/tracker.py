@@ -463,7 +463,7 @@ class Tracker:
                 np.savetxt(bbox_file, tracked_bb, delimiter='\t', fmt='%d')
 
 
-    def run_video_noninteractive(self, debug=None, visdom_info=None, videofilepath=None, init_frame=1, optional_box=None):
+    def run_video_noninteractive(self, videofilepath: str, sequences: dict, debug=None, visdom_info=None):
         """Run the tracker with a provided video file. Output the bounding
         boxes in form of an ordered dictionary that contains a list of
         bounding boxes for each object id.
@@ -495,9 +495,27 @@ class Tracker:
         else:
             raise ValueError('Unknown multi object mode {}'.format(multiobj_mode))
 
+        # Sort sequences based on initial frame number
+        sorted_sequences = sorted(sequences.items(), key=lambda x: x[1]['init_frame'])
+        sequences = dict(sorted_sequences)
+
+        # Initialize video capture
         cap = cv.VideoCapture(videofilepath)
 
+        # Set up dictionaries and lists for tracking
+        sequence_keys = list(sequences.keys())
+        object_id = sequence_keys[0]
+        total_objects = len(sequence_keys)
+        optional_box = sequences.get(object_id).get('bbox')
+        sequence_object_ids = [object_id]
+        output_boxes = OrderedDict()
+        output_masks = OrderedDict()
+        end_tracker = dict()
+        for obj_id in sequence_keys:
+            end_tracker[obj_id] = False
+
         # Skip to first frame with bounding box
+        init_frame = sequences.get(object_id).get('init_frame')
         countdown = init_frame - 1
         while countdown > 0:
             cap.read()
@@ -505,34 +523,21 @@ class Tracker:
         _, frame = cap.read()
 
         current_frame = init_frame
-        temp_frame_cutoff = init_frame + 200
-        next_object_id = 1
-        sequence_object_ids = []
-        prev_output = OrderedDict()
-        output_boxes = OrderedDict()
-        output_masks = OrderedDict()
+        temp_frame_cutoff = init_frame + 155
 
-        assert optional_box is not None, "No initial bounding box provided."
-        assert isinstance(optional_box, (list, tuple))
-        assert len(optional_box) == 4, "valid box's format is [x,y,w,h]"
-
-        out = tracker.initialize(frame, {'init_bbox': OrderedDict({next_object_id: optional_box}),
-                                    'init_object_ids': [next_object_id, ],
-                                    'object_ids': [next_object_id, ],
-                                    'sequence_object_ids': [next_object_id, ]})
+        # Initialize tracker for object appearing first
+        out = tracker.initialize(frame, {'init_bbox': OrderedDict({object_id: optional_box}),
+                                    'init_object_ids': [object_id, ],
+                                    'object_ids': [object_id, ],
+                                    'sequence_object_ids': [object_id, ]})
 
         prev_output = OrderedDict(out)
-
-        output_boxes[next_object_id] = [optional_box, ]
-        output_masks[next_object_id] = [None, ]
-        sequence_object_ids.append(next_object_id)
-        next_object_id += 1
-        end_tracker = False
+        output_boxes[object_id] = [optional_box, ]
+        output_masks[object_id] = [None, ]
 
         while True:
 
             if init_frame != current_frame:
-                # Capture frame-by-frame
                 _, frame = cap.read()
                 if frame is None:
                     break
@@ -540,24 +545,47 @@ class Tracker:
             info = OrderedDict()
             info['previous_output'] = prev_output
 
+            # Check if there are any new objects to track
+            if total_objects > len(list(output_boxes.keys())):
+                next_object_id = sequence_keys[len(list(output_boxes.keys()))]
+                if current_frame == sequences.get(next_object_id)['init_frame']:
+                    bbox = sequences.get(next_object_id).get('bbox')
+                    info['init_object_ids'] = [next_object_id, ]
+                    info['init_bbox'] = OrderedDict({next_object_id: bbox})
+                    sequence_object_ids.append(next_object_id)
+                    output_boxes[next_object_id] = [bbox, ]
+                    output_masks[next_object_id] = [None, ]
+
             if len(sequence_object_ids) > 0:
                 info['sequence_object_ids'] = sequence_object_ids
-                out = tracker.track(frame, info)
 
+                # Track objects that are present in the current frame
+                out = tracker.track(frame, info)
                 prev_output = OrderedDict(out)
 
                 if 'target_bbox' in out:
                     for obj_id, state in out['target_bbox'].items():
+                        # Check if the tracker for the object has ended and skip if yes
+                        if end_tracker[obj_id]:
+                            continue
+
                         state = [int(s) for s in state]
+
+                        # If bounding box infeasible stop tracker for object
                         if np.all(np.asarray(state) == np.asarray([0, 0, 1, 1])):
-                            end_tracker = True
+                            # TODO: not break but remove the object from the info
+                            # object that governs the tracking
+                            end_tracker[obj_id] = True
+                            #sequence_object_ids.remove(obj_id)
                             break
+
                         output_boxes[obj_id].append(state)
 
                 if 'segmentation' in out:
                     output_masks[obj_id].append(out['segmentation'])
 
-            if end_tracker or current_frame == temp_frame_cutoff:
+            # Break tracking loop if all objects have ended or if the frame limit is reached
+            if current_frame == temp_frame_cutoff or np.all(np.asarray(list(end_tracker.values()))):
                 break
 
             current_frame += 1
