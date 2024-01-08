@@ -532,10 +532,9 @@ class Tracker:
 
         while True:
 
-            if init_frame != current_frame:
-                _, frame = cap.read()
-                if frame is None:
-                    break
+            _, frame = cap.read()
+            if frame is None:
+                break
 
             info = OrderedDict()
             info['previous_output'] = prev_output
