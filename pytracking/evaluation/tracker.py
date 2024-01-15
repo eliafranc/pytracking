@@ -513,7 +513,6 @@ class Tracker:
         # Skip to first frame with bounding box and set current frame
         init_frame = sequences.get(object_id).get('init_frame')
         current_frame = init_frame
-        temp_frame_cutoff = init_frame + 155  # TODO: remove when ready
         countdown = init_frame - 1
         while countdown > 0:
             cap.read()
@@ -575,9 +574,8 @@ class Tracker:
                 if 'segmentation' in out:
                     output_masks[obj_id].append(out['segmentation'])
 
-            # Break tracking loop if all objects have ended or if the frame limit is reached
-            # TODO: remove frame limit when ready
-            if current_frame == temp_frame_cutoff or np.all(np.asarray(list(end_tracker.values()))):
+            # Break tracking loop if all objects have ended
+            if np.all(np.asarray(list(end_tracker.values()))):
                 break
 
             current_frame += 1
