@@ -50,8 +50,8 @@ RUN apt update -y && apt upgrade -y && apt install -y \
     x11-apps
 
 RUN python3 -m pip install --upgrade pip && python3 -m pip install \
-    torch=2.1.2 \
-    torchvision0.16.2 \
+    torch==2.1.2 \
+    torchvision==0.16.2 \
     pandas \
     opencv-python \
     numpy \
