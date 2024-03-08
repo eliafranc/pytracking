@@ -14,6 +14,8 @@ from ltr.data.bounding_box_utils import masks_to_bboxes
 from pytracking.evaluation.multi_object_wrapper import MultiObjectWrapper
 from pathlib import Path
 import torch
+from time import perf_counter_ns
+
 
 
 _tracker_disp_colors = {1: (0, 255, 0), 2: (0, 0, 255), 3: (255, 0, 0),
@@ -273,6 +275,8 @@ class Tracker:
         params.tracker_name = self.name
         params.param_name = self.parameter_name
 
+        timings = []
+
         self._init_visdom(visdom_info, debug_)
 
         multiobj_mode = getattr(params, 'multiobj_mode', getattr(self.tracker_class, 'multiobj_mode', 'default'))
@@ -393,7 +397,12 @@ class Tracker:
 
             if len(sequence_object_ids) > 0:
                 info['sequence_object_ids'] = sequence_object_ids
+
+                t1_start = perf_counter_ns()
                 out = tracker.track(frame, info)
+                t1_stop = perf_counter_ns()
+                timings.append(t1_stop - t1_start)
+                print("Elapsed time:", np.mean(timings) / 1e6, "ms")
 
                 prev_output = OrderedDict(out)
 
