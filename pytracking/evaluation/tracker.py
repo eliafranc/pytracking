@@ -14,7 +14,7 @@ from ltr.data.bounding_box_utils import masks_to_bboxes
 from pytracking.evaluation.multi_object_wrapper import MultiObjectWrapper
 from pathlib import Path
 import torch
-
+from evutils.io.reader import EventReader_HDF5
 
 _tracker_disp_colors = {1: (0, 255, 0), 2: (0, 0, 255), 3: (255, 0, 0),
                         4: (255, 255, 255), 5: (0, 0, 0), 6: (0, 255, 128),
@@ -565,6 +565,132 @@ class Tracker:
 
         # When everything done, release the capture
         cap.release()
+
+        return output_boxes
+
+    def run_on_tensor(self, timings_file, rgb_frame_dir, event_file, homography_file, label_file, debug=None, visdom_info=None):
+        """
+        Run the tracker on a sequence (rgb frames, events for each frame). Output the bounding
+        boxes in form of an ordered dictionary that contains a list of
+        bounding boxes for each object id.
+
+        args:
+            debug: Debug level.
+        """
+        # Tracker parameter setup
+        params = self.get_parameters()
+        debug_ = debug
+        if debug is None:
+            debug_ = getattr(params, 'debug', 0)
+        params.debug = debug_
+        params.tracker_name = self.name
+        params.param_name = self.parameter_name
+        self._init_visdom(visdom_info, debug_)
+        multiobj_mode = getattr(params, 'multiobj_mode', getattr(self.tracker_class, 'multiobj_mode', 'default'))
+
+        if multiobj_mode == 'default':
+            tracker = self.create_tracker(params)
+            if hasattr(tracker, 'initialize_features'):
+                tracker.initialize_features()
+        elif multiobj_mode == 'parallel':
+            tracker = MultiObjectWrapper(self.tracker_class, params, self.visdom, fast_load=False)
+        else:
+            raise ValueError('Unknown multi object mode {}'.format(multiobj_mode))
+
+        # Load necessary files
+        timings = np.load(timings_file)
+        rgb_frames = sorted(os.listdir(rgb_frame_dir))
+        event_reader = EventReader_HDF5(event_file)
+        homography = np.load(homography_file)
+        labels = np.load(label_file)
+
+
+
+
+        # Initialize video capture
+        initial_frame = timings[0]['frame']
+        first_labeled_frame = rgb_frames[initial_frame]
+        optional_box = [labels['frame' == first_labeled_frame][2:6]]
+        object_id = labels['frame' == first_labeled_frame]['track_id']
+
+        print(optional_box)
+
+
+        # Set up dictionaries and lists for tracking
+        #sequence_keys = list(sequences.keys())
+        sequence_object_ids = [object_id]
+        output_boxes = OrderedDict()
+        output_masks = OrderedDict()
+        end_tracker = dict()
+        for obj_id in [object_id,]:
+            end_tracker[obj_id] = False
+
+        # Skip to first frame with bounding box and set current frame
+        current_frame = initial_frame + 1
+
+        # Initialize tracker for object appearing first
+        out = tracker.initialize(initial_frame, {'init_bbox': OrderedDict({object_id: optional_box}),
+                                         'init_object_ids': [object_id, ],
+                                         'object_ids': [object_id, ],
+                                         'sequence_object_ids': [object_id, ]})
+
+        prev_output = OrderedDict(out)
+        output_boxes[object_id] = [optional_box, ]
+        output_masks[object_id] = [None, ]
+
+        while True:
+
+            frame = rgb_frames[current_frame]
+            if frame is None:
+                break
+
+            info = OrderedDict()
+            info['previous_output'] = prev_output
+
+            # Check if there are any new objects to track
+            '''
+            if len(sequence_keys) > len(list(output_boxes.keys())):
+                next_object_id = sequence_keys[len(list(output_boxes.keys()))]
+                if current_frame == sequences.get(next_object_id)['init_frame']:
+                    bbox = sequences.get(next_object_id).get('bbox')
+                    info['init_object_ids'] = [next_object_id, ]
+                    info['init_bbox'] = OrderedDict({next_object_id: bbox})
+                    sequence_object_ids.append(next_object_id)
+                    output_boxes[next_object_id] = [bbox, ]
+                    output_masks[next_object_id] = [None, ]
+            '''
+
+            if len(sequence_object_ids) > 0:
+                info['sequence_object_ids'] = sequence_object_ids
+
+                # Track objects that are present in the current frame
+                out = tracker.track(frame, info)
+                prev_output = OrderedDict(out)
+
+                if 'target_bbox' in out:
+                    for obj_id, state in out['target_bbox'].items():
+                        state = [int(s) for s in state]
+
+                        # Check if the tracker for the object has ended and skip if yes
+                        if end_tracker[obj_id]:
+                            continue
+
+                        # If bounding box infeasible stop tracker for object
+                        if np.all(np.asarray(state) == np.asarray([0, 0, 1, 1])):
+                            end_tracker[obj_id] = True
+                            break
+
+                        output_boxes[obj_id].append(state)
+
+                if 'segmentation' in out:
+                    output_masks[obj_id].append(out['segmentation'])
+
+            # Break tracking loop if all objects have ended
+            if np.all(np.asarray(list(end_tracker.values()))):
+                break
+
+            current_frame += 1
+
 
         return output_boxes
 
