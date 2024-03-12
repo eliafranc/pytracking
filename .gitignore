@@ -19,3 +19,5 @@ pytracking/run_local.py
 pytracking/experiments/pure_event_samples/
 .gitignore
 pytracking/experiments/07v58r01.mp4
+output_imgs/
+evutils/
