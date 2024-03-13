@@ -623,7 +623,15 @@ class Tracker:
         return output_boxes
 
     def run_on_tensor(
-        self, timings_file, rgb_frame_dir, event_file, homography_file, label_file, debug=None, visdom_info=None
+        self,
+        timings_file,
+        rgb_frame_dir,
+        event_file,
+        homography_file,
+        label_file,
+        debug=None,
+        visdom_info=None,
+        vis=False,
     ):
         """
         Run the tracker on a sequence (rgb frames, events for each frame). Output the bounding
@@ -633,6 +641,31 @@ class Tracker:
         args:
             debug: Debug level.
         """
+
+        def create_tensor(frame_number, rgb_frame_dir, event_reader, homography, timings, gray_channel=0):
+            rgb_frame = cv.imread(os.path.join(rgb_frame_dir, rgb_frames[frame_number]))
+            warped_rgb_image = cv.warpPerspective(rgb_frame, homography, (1280, 720))
+            gray_warped_rgb_image = cv.cvtColor(warped_rgb_image, cv.COLOR_BGR2GRAY)
+            start_ts = int(np.floor(timings["t"][frame_number] / 1000))
+            events = event_reader.read(start_ts, start_ts + 10)
+            on_events = events[events["p"] == 1]
+            off_events = events[events["p"] == 0]
+            on_frame = np.zeros((720, 1280), dtype=np.uint8)
+            on_frame[on_events["y"], on_events["x"]] = 255
+            off_frame = np.zeros((720, 1280), dtype=np.uint8)
+            off_frame[off_events["y"], off_events["x"]] = 255
+            if gray_channel == 0:
+                final_image = cv.merge([gray_warped_rgb_image, on_frame, off_frame])
+            elif gray_channel == 1:
+                final_image = cv.merge([on_frame, gray_warped_rgb_image, off_frame])
+            elif gray_channel == 2:
+                final_image = cv.merge([on_frame, off_frame, gray_warped_rgb_image])
+            else:
+                gray_warped_rgb_image[events["y"], events["x"]] = 255
+                final_image = cv.merge([gray_warped_rgb_image, gray_warped_rgb_image, gray_warped_rgb_image])
+
+            return final_image
+
         # Tracker parameter setup
         params = self.get_parameters()
         debug_ = debug
@@ -661,30 +694,23 @@ class Tracker:
         labels = np.load(label_file)
 
         # Initialize video capture
-        initial_frame = labels[0]["frame"]
-        first_rgb_frame = cv.imread(os.path.join(rgb_frame_dir, rgb_frames[initial_frame]))
-        warped_rgb_image = cv.warpPerspective(first_rgb_frame, homography, (1280, 720))
-        gray_warped_rgb_image = cv.cvtColor(warped_rgb_image, cv.COLOR_BGR2GRAY)
-        events = event_reader.read(0, 10)
-        on_events = events[events["p"] == 1]
-        off_events = events[events["p"] == 0]
-        on_frame = np.zeros((720, 1280), dtype=np.uint8)
-        on_frame[on_events["y"], on_events["x"]] = 255
-        off_frame = np.zeros((720, 1280), dtype=np.uint8)
-        off_frame[off_events["y"], off_events["x"]] = 255
-        optional_box = [labels[0]["x"], labels[0]["y"], labels[0]["w"], labels[0]["h"]]
-        x = int(labels[0]["x"])
-        y = int(labels[0]["y"])
-        w = int(labels[0]["w"])
-        h = int(labels[0]["h"])
-        gray_warped_rgb_image[events["y"], events["x"]] = 0
-        print(gray_warped_rgb_image.shape)
-        final_image = cv.merge([gray_warped_rgb_image, gray_warped_rgb_image, gray_warped_rgb_image])
-        image = cv.rectangle(final_image, (x, y), (x + w, y + h), (0, 255, 0), 2)
-        cv.imwrite("composed_gray_with_lowlights.jpg", image)
-        object_id = labels[0]["track_id"]
+        initial_labeled_frame = labels[0]["frame"]
+        last_frame = len(rgb_frames) - 1
+        initial_tensor = create_tensor(initial_labeled_frame, rgb_frame_dir, event_reader, homography, timings, 0)
+        optional_box = [int(labels[0]["x"]), int(labels[0]["y"]), int(labels[0]["w"]), int(labels[0]["h"])]
+        # image = cv.rectangle(final_image, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        # cv.imwrite("composed_gray_with_lowlights.jpg", image)
+        object_id = labels[0]["track_id"] + 1
 
-        return
+        if vis:
+            output_image = cv.rectangle(
+                initial_tensor,
+                (optional_box[0], optional_box[1]),
+                (optional_box[0] + optional_box[2], optional_box[1] + optional_box[3]),
+                (0, 255, 0),
+                2,
+            )
+            cv.imwrite(f"experiments/output/frame_{initial_labeled_frame}.jpg", output_image)
 
         # Set up dictionaries and lists for tracking
         # sequence_keys = list(sequences.keys())
@@ -698,11 +724,11 @@ class Tracker:
             end_tracker[obj_id] = False
 
         # Skip to first frame with bounding box and set current frame
-        current_frame = initial_frame + 1
+        current_frame = int(initial_labeled_frame + 1)
 
         # Initialize tracker for object appearing first
         out = tracker.initialize(
-            initial_frame,
+            initial_tensor,
             {
                 "init_bbox": OrderedDict({object_id: optional_box}),
                 "init_object_ids": [
@@ -726,9 +752,9 @@ class Tracker:
         ]
 
         while True:
-
-            frame = rgb_frames[current_frame]
-            if frame is None:
+            print(current_frame)
+            tensor = create_tensor(current_frame, rgb_frame_dir, event_reader, homography, timings, 0)
+            if tensor is None:
                 break
 
             info = OrderedDict()
@@ -751,13 +777,14 @@ class Tracker:
                 info["sequence_object_ids"] = sequence_object_ids
 
                 # Track objects that are present in the current frame
-                out = tracker.track(frame, info)
+                out = tracker.track(tensor, info)
                 prev_output = OrderedDict(out)
+                bboxes_for_vis = []
 
                 if "target_bbox" in out:
                     for obj_id, state in out["target_bbox"].items():
                         state = [int(s) for s in state]
-
+                        bboxes_for_vis.append((obj_id, state))
                         # Check if the tracker for the object has ended and skip if yes
                         if end_tracker[obj_id]:
                             continue
@@ -769,14 +796,29 @@ class Tracker:
 
                         output_boxes[obj_id].append(state)
 
-                if "segmentation" in out:
-                    output_masks[obj_id].append(out["segmentation"])
+                    if "segmentation" in out:
+                        output_masks[obj_id].append(out["segmentation"])
+
+                    if vis:
+                        for obj_id, bbox in bboxes_for_vis:
+                            print(bbox)
+                            tensor = cv.rectangle(
+                                tensor,
+                                (bbox[0], bbox[1]),
+                                (bbox[0] + bbox[2], bbox[1] + bbox[3]),
+                                _tracker_disp_colors[obj_id],
+                                2,
+                            )
+
+                        cv.imwrite(f"experiments/output/frame_{current_frame}.jpg", tensor)
 
             # Break tracking loop if all objects have ended
-            if np.all(np.asarray(list(end_tracker.values()))):
+            if np.all(np.asarray(list(end_tracker.values()))) or current_frame == last_frame:
                 break
 
             current_frame += 1
+
+        print(output_boxes)
 
         return output_boxes
 

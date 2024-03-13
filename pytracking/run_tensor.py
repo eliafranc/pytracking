@@ -2,7 +2,7 @@ import os
 import sys
 import argparse
 
-env_path = os.path.join(os.path.dirname(__file__), '..')
+env_path = os.path.join(os.path.dirname(__file__), "..")
 if env_path not in sys.path:
     sys.path.append(env_path)
 
@@ -19,7 +19,18 @@ Test Files:
 
 """
 
-def run_tensor(tracker_name, tracker_param, timings_file, rgb_frame_dir, event_file, homography_file, label_file,  debug=None, save_results=False):
+
+def run_tensor(
+    tracker_name,
+    tracker_param,
+    timings_file,
+    rgb_frame_dir,
+    event_file,
+    homography_file,
+    label_file,
+    debug=None,
+    vis=False,
+):
     """Run the tracker on your webcam.
     args:
         tracker_name: Name of tracking method.
@@ -27,7 +38,8 @@ def run_tensor(tracker_name, tracker_param, timings_file, rgb_frame_dir, event_f
         ...
     """
     tracker = Tracker(tracker_name, tracker_param)
-    tracker.run_on_tensor(timings_file, rgb_frame_dir, event_file, homography_file, label_file , debug=debug)
+    tracker.run_on_tensor(timings_file, rgb_frame_dir, event_file, homography_file, label_file, debug=debug, vis=vis)
+
 
 def main():
     """
@@ -47,12 +59,18 @@ def main():
 
     run_tensor(args.tracker_name, args.tracker_param, args.timings_file, args.rgb_frame_dir, args.event_file, args.homography_file, args.label_file, args.debug, args.save_results)
     """
-    run_tensor('rts', 'rts50', '/home/efranc/data/2024_01_10_112814_drone_000/frames_ts.csv',
-        '/home/efranc/data/2024_01_10_112814_drone_000/frames',
-        '/home/efranc/data/2024_01_10_112814_drone_000/events_left_final.h5',
-        '/home/efranc/data/2024_01_10_112814_drone_000/Projection_rgb_to_events_left.npy',
-        '/home/efranc/data/2024_01_10_112814_drone_000/labels_events_left.npy', None, True)
+    run_tensor(
+        "rts",
+        "rts50",
+        "/home/efranc/data/2024_01_10_120347_10km_001/frames_ts.csv",
+        "/home/efranc/data/2024_01_10_120347_10km_001/frames",
+        "/home/efranc/data/2024_01_10_120347_10km_001/events_left_final.h5",
+        "/home/efranc/data/2024_01_10_120347_10km_001/Projection_rgb_to_events_left.npy",
+        "/home/efranc/data/2024_01_10_120347_10km_001/labels_events_left.npy",
+        None,
+        True,
+    )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

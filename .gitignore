@@ -21,3 +21,5 @@ pytracking/experiments/pure_event_samples/
 pytracking/experiments/07v58r01.mp4
 output_imgs/
 evutils/
+pytracking/experiments/output_chanel_vids/
+pytracking/experiments/output/
