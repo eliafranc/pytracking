@@ -17,6 +17,10 @@ Test Files:
 '/home/efranc/data/2024_01_10_112814_drone_000/Projection_rgb_to_event_left.npy',
 '/home/efranc/data/2024_01_10_112814_drone_000/labels_events_left.npy'
 
+
+log:
+    - 2024_01_10_120347_10km_001
+    - 2024_01_10_153109_dji_000
 """
 
 
@@ -30,6 +34,7 @@ def run_tensor(
     label_file,
     debug=None,
     vis=False,
+    rgb_only=False,
 ):
     """Run the tracker on your webcam.
     args:
@@ -38,7 +43,9 @@ def run_tensor(
         ...
     """
     tracker = Tracker(tracker_name, tracker_param)
-    tracker.run_on_tensor(timings_file, rgb_frame_dir, event_file, homography_file, label_file, debug=debug, vis=vis)
+    tracker.run_on_tensor(
+        timings_file, rgb_frame_dir, event_file, homography_file, label_file, debug=debug, vis=vis, rgb_only=rgb_only
+    )
 
 
 def main():
@@ -59,16 +66,19 @@ def main():
 
     run_tensor(args.tracker_name, args.tracker_param, args.timings_file, args.rgb_frame_dir, args.event_file, args.homography_file, args.label_file, args.debug, args.save_results)
     """
+    sequence = "2024_01_10_162004_focus_000"
+
     run_tensor(
         "rts",
         "rts50",
-        "/home/efranc/data/2024_01_10_120347_10km_001/frames_ts.csv",
-        "/home/efranc/data/2024_01_10_120347_10km_001/frames",
-        "/home/efranc/data/2024_01_10_120347_10km_001/events_left_final.h5",
-        "/home/efranc/data/2024_01_10_120347_10km_001/Projection_rgb_to_events_left.npy",
-        "/home/efranc/data/2024_01_10_120347_10km_001/labels_events_left.npy",
+        f"/home/efranc/data/{sequence}/frames_ts.csv",
+        f"/home/efranc/data/{sequence}/frames",
+        f"/home/efranc/data/{sequence}/events_left_final.h5",
+        f"/home/efranc/data/{sequence}/Projection_rgb_to_events_left.npy",
+        f"/home/efranc/data/{sequence}/labels_events_left.npy",
         None,
         True,
+        False,
     )
 
 

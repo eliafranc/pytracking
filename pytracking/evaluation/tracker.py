@@ -632,6 +632,7 @@ class Tracker:
         debug=None,
         visdom_info=None,
         vis=False,
+        rgb_only=False,
     ):
         """
         Run the tracker on a sequence (rgb frames, events for each frame). Output the bounding
@@ -642,12 +643,19 @@ class Tracker:
             debug: Debug level.
         """
 
-        def create_tensor(frame_number, rgb_frame_dir, event_reader, homography, timings, gray_channel=0, dt_ms=10):
+        def create_tensor(
+            frame_number, rgb_frame_dir, event_reader, homography, timings, gray_channel=0, dt_ms=10, rgb_only=False
+        ):
             rgb_frame = cv.imread(os.path.join(rgb_frame_dir, rgb_frames[frame_number]))
             warped_rgb_image = cv.warpPerspective(rgb_frame, homography, (1280, 720))
+            if rgb_only:
+                return warped_rgb_image
             gray_warped_rgb_image = cv.cvtColor(warped_rgb_image, cv.COLOR_BGR2GRAY)
             start_ts = int(np.floor(timings["t"][frame_number] / 1000))
             events = event_reader.read(start_ts, start_ts + dt_ms)
+            if events.shape[0] >= 50000:
+                return cv.merge([gray_warped_rgb_image, gray_warped_rgb_image, gray_warped_rgb_image])
+
             on_events = events[events["p"] == 1]
             off_events = events[events["p"] == 0]
             on_frame = np.zeros((720, 1280), dtype=np.uint8)
@@ -662,11 +670,30 @@ class Tracker:
                 final_image = cv.merge([on_frame, off_frame, gray_warped_rgb_image])
             else:
                 merged_image = cv.merge([gray_warped_rgb_image, gray_warped_rgb_image, gray_warped_rgb_image])
-                merged_image[on_frame > 0] = [0, 255, 0]
+                merged_image[on_frame > 0] = [255, 0, 0]
                 merged_image[off_frame > 0] = [0, 0, 255]
                 final_image = merged_image
 
             return final_image
+
+        def get_tracker_init_dictionaries(init_index_for_track_id, init_frames_for_track_id, labels):
+            init_bbox = OrderedDict()
+            init_object_ids = []
+            sequence_object_ids = []
+            lowest_frame_number = np.min(list(init_frames_for_track_id.values()))
+            print(init_frames_for_track_id)
+            for obj_id, value in init_frames_for_track_id.items():
+                if value == lowest_frame_number:
+                    init_object_ids.append(obj_id)
+                    sequence_object_ids.append(obj_id)
+                    init_bbox[obj_id] = [
+                        int(labels[init_index_for_track_id[obj_id]]["x"]),
+                        int(labels[init_index_for_track_id[obj_id]]["y"]),
+                        int(labels[init_index_for_track_id[obj_id]]["w"]),
+                        int(labels[init_index_for_track_id[obj_id]]["h"]),
+                    ]
+
+            return init_bbox, init_object_ids, init_object_ids, sequence_object_ids
 
         # Tracker parameter setup
         params = self.get_parameters()
@@ -695,73 +722,69 @@ class Tracker:
         homography = np.load(homography_file)
         labels = np.load(label_file)
 
-        # Initialize video capture
-        inital_label_index = 2
-        initial_labeled_frame = labels[inital_label_index]["frame"]
-        last_frame = len(rgb_frames) - 1
-        initial_tensor = create_tensor(initial_labeled_frame, rgb_frame_dir, event_reader, homography, timings, 3, 20)
-        optional_box = [
-            int(labels[inital_label_index]["x"]),
-            int(labels[inital_label_index]["y"]),
-            int(labels[inital_label_index]["w"]),
-            int(labels[inital_label_index]["h"]),
-        ]
-        # image = cv.rectangle(final_image, (x, y), (x + w, y + h), (0, 255, 0), 2)
-        # cv.imwrite("composed_gray_with_lowlights.jpg", image)
-        object_id = labels[0]["track_id"] + 1
-
-        if vis:
-            output_image = cv.rectangle(
-                initial_tensor,
-                (optional_box[0], optional_box[1]),
-                (optional_box[0] + optional_box[2], optional_box[1] + optional_box[3]),
-                (0, 255, 0),
-                2,
+        # Get initial frame numbers and indices for labels for each object
+        unique_track_ids = np.unique([label["track_id"] for label in labels])
+        init_frames_for_track_id = {}
+        init_index_for_track_id = {}
+        inital_label_offset = 4
+        for track_id in unique_track_ids:
+            # Set key for dictionary to start with 1 instead of 0 as it is necessary for the tracker to work
+            init_index_for_track_id[track_id + 1] = int(
+                np.where(labels["track_id"] == track_id)[0][0] + inital_label_offset
             )
-            cv.imwrite(f"experiments/output/frame_{initial_labeled_frame}.jpg", output_image)
+            init_frames_for_track_id[track_id + 1] = int(
+                labels[np.where(labels["track_id"] == track_id)]["frame"][0] + inital_label_offset
+            )
+
+        # Get the initial tensor for the first frame
+        initial_tensor = create_tensor(
+            init_frames_for_track_id[1], rgb_frame_dir, event_reader, homography, timings, 3, 10, rgb_only
+        )
 
         # Set up dictionaries and lists for tracking
-        # sequence_keys = list(sequences.keys())
-        sequence_object_ids = [object_id]
         output_boxes = OrderedDict()
         output_masks = OrderedDict()
-        end_tracker = dict()
-        for obj_id in [
-            object_id,
-        ]:
-            end_tracker[obj_id] = False
+        init_bb, init_obj_ids, obj_ids, sequence_obj_ids = get_tracker_init_dictionaries(
+            init_index_for_track_id, init_frames_for_track_id, labels
+        )
 
-        # Skip to first frame with bounding box and set current frame
-        current_frame = int(initial_labeled_frame + 1)
+        # Set up variable regarding frame numbers
+        last_frame = len(rgb_frames) - 1
+        current_frame = int(init_frames_for_track_id[1] + 1)
 
-        # Initialize tracker for object appearing first
+        # Initialize tracker for objects appearing first
         out = tracker.initialize(
             initial_tensor,
             {
-                "init_bbox": OrderedDict({object_id: optional_box}),
-                "init_object_ids": [
-                    object_id,
-                ],
-                "object_ids": [
-                    object_id,
-                ],
-                "sequence_object_ids": [
-                    object_id,
-                ],
+                "init_bbox": init_bb,
+                "init_object_ids": init_obj_ids,
+                "object_ids": obj_ids,
+                "sequence_object_ids": sequence_obj_ids,
             },
         )
 
+        # Fill in the initial output dictionaries and visualize if set
         prev_output = OrderedDict(out)
-        output_boxes[object_id] = [
-            optional_box,
-        ]
-        output_masks[object_id] = [
-            None,
-        ]
+        for obj_id, bbox in init_bb.items():
+            output_boxes[obj_id] = [
+                bbox,
+            ]
+            output_masks[obj_id] = [
+                None,
+            ]
+            if vis:
+                initial_tensor = cv.rectangle(
+                    initial_tensor,
+                    (bbox[0], bbox[1]),
+                    (bbox[0] + bbox[2], bbox[1] + bbox[3]),
+                    _tracker_disp_colors[obj_id],
+                    1,
+                )
+                cv.imwrite(f"experiments/output/frame_{init_frames_for_track_id[1]}.jpg", initial_tensor)
 
         while True:
             print(current_frame)
-            tensor = create_tensor(current_frame, rgb_frame_dir, event_reader, homography, timings, 3, 20)
+            tensor = create_tensor(current_frame, rgb_frame_dir, event_reader, homography, timings, 3, 10, rgb_only)
             if tensor is None:
                 break
 
@@ -769,20 +792,34 @@ class Tracker:
             info["previous_output"] = prev_output
 
             # Check if there are any new objects to track
-            """
-            if len(sequence_keys) > len(list(output_boxes.keys())):
-                next_object_id = sequence_keys[len(list(output_boxes.keys()))]
-                if current_frame == sequences.get(next_object_id)['init_frame']:
-                    bbox = sequences.get(next_object_id).get('bbox')
-                    info['init_object_ids'] = [next_object_id, ]
-                    info['init_bbox'] = OrderedDict({next_object_id: bbox})
-                    sequence_object_ids.append(next_object_id)
-                    output_boxes[next_object_id] = [bbox, ]
-                    output_masks[next_object_id] = [None, ]
-            """
+            if len(unique_track_ids) > len(list(output_boxes.keys())):
+                for not_yet_init_ids in np.setdiff1d(unique_track_ids + 1, list(output_boxes.keys())):
+                    new_init_obj_ids = []
+                    new_init_bboxes = OrderedDict()
+                    if current_frame == init_frames_for_track_id.get(not_yet_init_ids):
+                        bbox = [
+                            int(labels[init_index_for_track_id[not_yet_init_ids]]["x"]),
+                            int(labels[init_index_for_track_id[not_yet_init_ids]]["y"]),
+                            int(labels[init_index_for_track_id[not_yet_init_ids]]["w"]),
+                            int(labels[init_index_for_track_id[not_yet_init_ids]]["h"]),
+                        ]
+                        new_init_obj_ids.append(not_yet_init_ids)
+                        new_init_bboxes[not_yet_init_ids] = bbox
+                        sequence_obj_ids.append(not_yet_init_ids)
+                        output_boxes[not_yet_init_ids] = [
+                            bbox,
+                        ]
+                        output_masks[not_yet_init_ids] = [
+                            None,
+                        ]
 
-            if len(sequence_object_ids) > 0:
-                info["sequence_object_ids"] = sequence_object_ids
+                # If any new objects are to be tracked, initialize the tracker with the new objects
+                if len(new_init_obj_ids) > 0:
+                    info["init_object_ids"] = new_init_obj_ids
+                    info["init_bbox"] = new_init_bboxes
+
+            if len(sequence_obj_ids) > 0:
+                info["sequence_object_ids"] = sequence_obj_ids
 
                 # Track objects that are present in the current frame
                 out = tracker.track(tensor, info)
@@ -794,8 +831,8 @@ class Tracker:
                         state = [int(s) for s in state]
                         bboxes_for_vis.append((obj_id, state))
                         # Check if the tracker for the object has ended and skip if yes
-                        if end_tracker[obj_id]:
-                            continue
+                        # if end_tracker[obj_id]:
+                        #     continue
 
                         # If bounding box infeasible stop tracker for object
                         # if np.all(np.asarray(state) == np.asarray([0, 0, 1, 1])):
@@ -815,18 +852,16 @@ class Tracker:
                                 (bbox[0], bbox[1]),
                                 (bbox[0] + bbox[2], bbox[1] + bbox[3]),
                                 _tracker_disp_colors[obj_id],
-                                2,
+                                1,
                             )
 
                         cv.imwrite(f"experiments/output/frame_{current_frame}.jpg", tensor)
 
             # Break tracking loop if all objects have ended
-            if np.all(np.asarray(list(end_tracker.values()))) or current_frame == last_frame:
+            if current_frame == last_frame:
                 break
 
             current_frame += 1
-
-        print(output_boxes)
 
         return output_boxes
 
