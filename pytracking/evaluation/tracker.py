@@ -642,12 +642,12 @@ class Tracker:
             debug: Debug level.
         """
 
-        def create_tensor(frame_number, rgb_frame_dir, event_reader, homography, timings, gray_channel=0):
+        def create_tensor(frame_number, rgb_frame_dir, event_reader, homography, timings, gray_channel=0, dt_ms=10):
             rgb_frame = cv.imread(os.path.join(rgb_frame_dir, rgb_frames[frame_number]))
             warped_rgb_image = cv.warpPerspective(rgb_frame, homography, (1280, 720))
             gray_warped_rgb_image = cv.cvtColor(warped_rgb_image, cv.COLOR_BGR2GRAY)
             start_ts = int(np.floor(timings["t"][frame_number] / 1000))
-            events = event_reader.read(start_ts, start_ts + 10)
+            events = event_reader.read(start_ts, start_ts + dt_ms)
             on_events = events[events["p"] == 1]
             off_events = events[events["p"] == 0]
             on_frame = np.zeros((720, 1280), dtype=np.uint8)
@@ -661,8 +661,10 @@ class Tracker:
             elif gray_channel == 2:
                 final_image = cv.merge([on_frame, off_frame, gray_warped_rgb_image])
             else:
-                gray_warped_rgb_image[events["y"], events["x"]] = 255
-                final_image = cv.merge([gray_warped_rgb_image, gray_warped_rgb_image, gray_warped_rgb_image])
+                merged_image = cv.merge([gray_warped_rgb_image, gray_warped_rgb_image, gray_warped_rgb_image])
+                merged_image[on_frame > 0] = [0, 255, 0]
+                merged_image[off_frame > 0] = [0, 0, 255]
+                final_image = merged_image
 
             return final_image
 
@@ -694,10 +696,16 @@ class Tracker:
         labels = np.load(label_file)
 
         # Initialize video capture
-        initial_labeled_frame = labels[0]["frame"]
+        inital_label_index = 2
+        initial_labeled_frame = labels[inital_label_index]["frame"]
         last_frame = len(rgb_frames) - 1
-        initial_tensor = create_tensor(initial_labeled_frame, rgb_frame_dir, event_reader, homography, timings, 0)
-        optional_box = [int(labels[0]["x"]), int(labels[0]["y"]), int(labels[0]["w"]), int(labels[0]["h"])]
+        initial_tensor = create_tensor(initial_labeled_frame, rgb_frame_dir, event_reader, homography, timings, 3, 20)
+        optional_box = [
+            int(labels[inital_label_index]["x"]),
+            int(labels[inital_label_index]["y"]),
+            int(labels[inital_label_index]["w"]),
+            int(labels[inital_label_index]["h"]),
+        ]
         # image = cv.rectangle(final_image, (x, y), (x + w, y + h), (0, 255, 0), 2)
         # cv.imwrite("composed_gray_with_lowlights.jpg", image)
         object_id = labels[0]["track_id"] + 1
@@ -753,7 +761,7 @@ class Tracker:
 
         while True:
             print(current_frame)
-            tensor = create_tensor(current_frame, rgb_frame_dir, event_reader, homography, timings, 0)
+            tensor = create_tensor(current_frame, rgb_frame_dir, event_reader, homography, timings, 3, 20)
             if tensor is None:
                 break
 
@@ -790,9 +798,9 @@ class Tracker:
                             continue
 
                         # If bounding box infeasible stop tracker for object
-                        if np.all(np.asarray(state) == np.asarray([0, 0, 1, 1])):
-                            end_tracker[obj_id] = True
-                            break
+                        # if np.all(np.asarray(state) == np.asarray([0, 0, 1, 1])):
+                        #     end_tracker[obj_id] = True
+                        #     break
 
                         output_boxes[obj_id].append(state)
 
