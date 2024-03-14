@@ -644,7 +644,7 @@ class Tracker:
             debug: Debug level.
         """
 
-        def create_tensor(
+        def _create_tensor(
             frame_number, rgb_frame_dir, event_reader, homography, timings, gray_channel=0, dt_ms=10, rgb_only=False
         ):
             rgb_frame = cv.imread(os.path.join(rgb_frame_dir, rgb_frames[frame_number]))
@@ -677,7 +677,7 @@ class Tracker:
 
             return final_image
 
-        def get_tracker_init_dictionaries(init_index_for_track_id, init_frames_for_track_id, labels):
+        def _get_tracker_init_dictionaries(init_index_for_track_id, init_frames_for_track_id, labels):
             init_bbox = OrderedDict()
             init_object_ids = []
             sequence_object_ids = []
@@ -738,20 +738,16 @@ class Tracker:
             )
 
         # Get the initial tensor for the first frame
-        initial_tensor = create_tensor(
+        initial_tensor = _create_tensor(
             init_frames_for_track_id[1], rgb_frame_dir, event_reader, homography, timings, 3, 10, rgb_only
         )
 
         # Set up dictionaries and lists for tracking
         output_boxes = OrderedDict()
         output_masks = OrderedDict()
-        init_bb, init_obj_ids, obj_ids, sequence_obj_ids = get_tracker_init_dictionaries(
+        init_bb, init_obj_ids, obj_ids, sequence_obj_ids = _get_tracker_init_dictionaries(
             init_index_for_track_id, init_frames_for_track_id, labels
         )
-
-        # Set up variable regarding frame numbers
-        last_frame = len(rgb_frames) - 1
-        current_frame = int(init_frames_for_track_id[1] + 1)
 
         # Initialize tracker for objects appearing first
         out = tracker.initialize(
@@ -766,13 +762,11 @@ class Tracker:
 
         # Fill in the initial output dictionaries and visualize if set
         prev_output = OrderedDict(out)
+        output_boxes[init_frames_for_track_id[1]] = OrderedDict()
+        output_masks[init_frames_for_track_id[1]] = OrderedDict()
         for obj_id, bbox in init_bb.items():
-            output_boxes[obj_id] = [
-                bbox,
-            ]
-            output_masks[obj_id] = [
-                None,
-            ]
+            output_boxes[init_frames_for_track_id[1]][obj_id] = bbox
+            output_masks[init_frames_for_track_id[1]][obj_id] = None
             if vis:
                 initial_tensor = cv.rectangle(
                     initial_tensor,
@@ -783,18 +777,24 @@ class Tracker:
                 )
                 cv.imwrite(f"experiments/output/frame_{init_frames_for_track_id[1]}.jpg", initial_tensor)
 
+        # Set up variable regarding frame numbers
+        last_frame = len(rgb_frames) - 1
+        current_frame = int(init_frames_for_track_id[1] + 1)
+
         while True:
             print(current_frame)
-            tensor = create_tensor(current_frame, rgb_frame_dir, event_reader, homography, timings, 3, 10, rgb_only)
+            tensor = _create_tensor(current_frame, rgb_frame_dir, event_reader, homography, timings, 3, 10, rgb_only)
             if tensor is None:
                 break
 
             info = OrderedDict()
             info["previous_output"] = prev_output
+            output_boxes[current_frame] = OrderedDict()
+            output_masks[current_frame] = OrderedDict()
 
             # Check if there are any new objects to track
-            if len(unique_track_ids) > len(list(output_boxes.keys())):
-                for not_yet_init_ids in np.setdiff1d(unique_track_ids + 1, list(output_boxes.keys())):
+            if len(unique_track_ids) > len(sequence_obj_ids):
+                for not_yet_init_ids in np.setdiff1d(unique_track_ids + 1, sequence_obj_ids):
                     new_init_obj_ids = []
                     new_init_bboxes = OrderedDict()
                     if current_frame == init_frames_for_track_id.get(not_yet_init_ids):
@@ -807,12 +807,8 @@ class Tracker:
                         new_init_obj_ids.append(not_yet_init_ids)
                         new_init_bboxes[not_yet_init_ids] = bbox
                         sequence_obj_ids.append(not_yet_init_ids)
-                        output_boxes[not_yet_init_ids] = [
-                            bbox,
-                        ]
-                        output_masks[not_yet_init_ids] = [
-                            None,
-                        ]
+                        output_boxes[current_frame][not_yet_init_ids] = bbox
+                        output_masks[current_frame][not_yet_init_ids] = None
 
                 # If any new objects are to be tracked, initialize the tracker with the new objects
                 if len(new_init_obj_ids) > 0:
@@ -840,14 +836,13 @@ class Tracker:
                         #     end_tracker[obj_id] = True
                         #     break
 
-                        output_boxes[obj_id].append(state)
+                        output_boxes[current_frame][obj_id] = state
 
                     if "segmentation" in out:
-                        output_masks[obj_id].append(out["segmentation"])
+                        output_masks[current_frame][obj_id] = out["segmentation"]
 
                     if vis:
                         for obj_id, bbox in bboxes_for_vis:
-                            print(bbox)
                             tensor = cv.rectangle(
                                 tensor,
                                 (bbox[0], bbox[1]),
@@ -863,6 +858,8 @@ class Tracker:
                 break
 
             current_frame += 1
+        
+        print(output_boxes)
 
         return output_boxes
 

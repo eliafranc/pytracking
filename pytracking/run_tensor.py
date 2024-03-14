@@ -20,7 +20,7 @@ PATH_TO_DATA = "/home/efranc/data"
 TIMINGS = "frames_ts.csv"
 RGB_FRAME_DIR = "frames"
 EVENT_FILE = "events_left_final.h5"
-HOMOGRAPHY_FILE = "Projection_rgb_to_event_left.npy"
+HOMOGRAPHY_FILE = "Projection_rgb_to_events_left.npy"
 LABEL_FILE = "labels_events_left.npy"
 
 
@@ -81,8 +81,8 @@ def main():
     args = parser.parse_args()
 
     run_tensor(
-        "rts",
-        "rts50",
+        args.tracker_name,
+        args.tracker_param,
         f"{PATH_TO_DATA}/{args.sequence}/{TIMINGS}",
         f"{PATH_TO_DATA}/{args.sequence}/{RGB_FRAME_DIR}",
         f"{PATH_TO_DATA}/{args.sequence}/{EVENT_FILE}",
