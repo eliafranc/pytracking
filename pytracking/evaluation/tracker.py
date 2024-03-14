@@ -633,6 +633,7 @@ class Tracker:
         visdom_info=None,
         vis=False,
         rgb_only=False,
+        save_results=False,
     ):
         """
         Run the tracker on a sequence (rgb frames, events for each frame). Output the bounding
