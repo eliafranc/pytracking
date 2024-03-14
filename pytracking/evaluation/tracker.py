@@ -840,12 +840,6 @@ class Tracker:
                     new_init_bboxes = OrderedDict()
                     if current_frame == init_frames_for_track_id.get(not_yet_init_ids):
                         bbox = _init_bbox_from_labels(labels, init_index_for_track_id[not_yet_init_ids])
-                        [
-                            int(labels[init_index_for_track_id[not_yet_init_ids]]["x"]),
-                            int(labels[init_index_for_track_id[not_yet_init_ids]]["y"]),
-                            int(labels[init_index_for_track_id[not_yet_init_ids]]["w"]),
-                            int(labels[init_index_for_track_id[not_yet_init_ids]]["h"]),
-                        ]
                         new_init_obj_ids.append(not_yet_init_ids)
                         new_init_bboxes[not_yet_init_ids] = bbox
                         sequence_obj_ids.append(not_yet_init_ids)
