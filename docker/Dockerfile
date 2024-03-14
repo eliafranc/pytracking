@@ -55,8 +55,10 @@ RUN python3 -m pip install --upgrade pip && python3 -m pip install \
     pandas \
     opencv-python \
     numpy \
+    numba \
     scipy \
     h5py \
+    hdf5plugin \
     jupyter \
     jupyterlab \
     matplotlib \
