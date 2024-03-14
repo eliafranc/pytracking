@@ -624,6 +624,7 @@ class Tracker:
 
     def run_on_tensor(
         self,
+        sequence_name,
         timings_file,
         rgb_frame_dir,
         event_file,
@@ -677,24 +678,50 @@ class Tracker:
 
             return final_image
 
+        def _init_bbox_from_labels(labels, frame_number):
+            x = int(np.clip(labels[frame_number]["x"] - 2, 0, 1280))
+            y = int(np.clip(labels[frame_number]["y"] - 1, 0, 720))
+            w = int(np.clip(labels[frame_number]["w"] + 4, 0, 1280))
+            h = int(np.clip(labels[frame_number]["h"] + 2, 0, 720))
+            return [x, y, w, h]
+
         def _get_tracker_init_dictionaries(init_index_for_track_id, init_frames_for_track_id, labels):
             init_bbox = OrderedDict()
             init_object_ids = []
             sequence_object_ids = []
             lowest_frame_number = np.min(list(init_frames_for_track_id.values()))
-            print(init_frames_for_track_id)
             for obj_id, value in init_frames_for_track_id.items():
+                # Only initialize objects that appear in the first frame
                 if value == lowest_frame_number:
                     init_object_ids.append(obj_id)
                     sequence_object_ids.append(obj_id)
-                    init_bbox[obj_id] = [
-                        int(labels[init_index_for_track_id[obj_id]]["x"]),
-                        int(labels[init_index_for_track_id[obj_id]]["y"]),
-                        int(labels[init_index_for_track_id[obj_id]]["w"]),
-                        int(labels[init_index_for_track_id[obj_id]]["h"]),
-                    ]
+                    init_bbox[obj_id] = _init_bbox_from_labels(labels, init_index_for_track_id[obj_id])
 
             return init_bbox, init_object_ids, init_object_ids, sequence_object_ids
+
+        def _save_results_to_npy(output_boxes, sequence_name):
+            output_array = np.zeros(
+                sum(len(v) for v in output_boxes.values()),
+                dtype=np.dtype(
+                    [
+                        ("frame", "<u8"),
+                        ("track_id", "<u4"),
+                        ("x", "<f4"),
+                        ("y", "<f4"),
+                        ("w", "<f4"),
+                        ("h", "<f4"),
+                        ("class_confidence", "<f4"),
+                        ("class_id", "u1"),
+                        ("visibility", "<f4"),
+                    ]
+                ),
+            )
+            index = 0
+            for frame, bbox_dict in output_boxes.items():
+                for track_id, bbox in bbox_dict.items():
+                    output_array[index] = (frame, track_id, bbox[0], bbox[1], bbox[2], bbox[3], 1, 1, 1)
+                    index += 1
+            np.save(os.path.join(self.results_dir, sequence_name, "predictions.npy"), output_array)
 
         # Tracker parameter setup
         params = self.get_parameters()
@@ -715,6 +742,17 @@ class Tracker:
             tracker = MultiObjectWrapper(self.tracker_class, params, self.visdom, fast_load=False)
         else:
             raise ValueError("Unknown multi object mode {}".format(multiobj_mode))
+
+        # Setup output directories
+        if save_results or vis:
+            if not os.path.exists(self.results_dir):
+                os.makedirs(self.results_dir)
+            if not os.path.exists(os.path.join(self.results_dir, sequence_name)):
+                os.makedirs(os.path.join(self.results_dir, sequence_name))
+            if vis:
+                vis_output_dir = os.path.join(self.results_dir, sequence_name, "frames")
+                if not os.path.exists(vis_output_dir):
+                    os.makedirs(vis_output_dir)
 
         # Load necessary files
         timings = np.genfromtxt(timings_file, delimiter=",", names=True)
@@ -775,7 +813,7 @@ class Tracker:
                     _tracker_disp_colors[obj_id],
                     1,
                 )
-                cv.imwrite(f"experiments/output/frame_{init_frames_for_track_id[1]}.jpg", initial_tensor)
+                cv.imwrite(f"{vis_output_dir}/{init_frames_for_track_id[1]:06d}.jpg", initial_tensor)
 
         # Set up variable regarding frame numbers
         last_frame = len(rgb_frames) - 1
@@ -791,6 +829,9 @@ class Tracker:
             info["previous_output"] = prev_output
             output_boxes[current_frame] = OrderedDict()
             output_masks[current_frame] = OrderedDict()
+            for obj_id in sequence_obj_ids:
+                output_boxes[current_frame][obj_id] = None
+                output_masks[current_frame][obj_id] = None
 
             # Check if there are any new objects to track
             if len(unique_track_ids) > len(sequence_obj_ids):
@@ -798,7 +839,8 @@ class Tracker:
                     new_init_obj_ids = []
                     new_init_bboxes = OrderedDict()
                     if current_frame == init_frames_for_track_id.get(not_yet_init_ids):
-                        bbox = [
+                        bbox = _init_bbox_from_labels(labels, init_index_for_track_id[not_yet_init_ids])
+                        [
                             int(labels[init_index_for_track_id[not_yet_init_ids]]["x"]),
                             int(labels[init_index_for_track_id[not_yet_init_ids]]["y"]),
                             int(labels[init_index_for_track_id[not_yet_init_ids]]["w"]),
@@ -824,7 +866,7 @@ class Tracker:
                 bboxes_for_vis = []
 
                 if "target_bbox" in out:
-                    for obj_id, state in out["target_bbox"].items():
+                    for obj_id, state in sorted(out["target_bbox"].items()):
                         state = [int(s) for s in state]
                         bboxes_for_vis.append((obj_id, state))
                         # Check if the tracker for the object has ended and skip if yes
@@ -851,15 +893,17 @@ class Tracker:
                                 1,
                             )
 
-                        cv.imwrite(f"experiments/output/frame_{current_frame}.jpg", tensor)
+                        cv.imwrite(f"{vis_output_dir}/{current_frame:06d}.jpg", tensor)
 
             # Break tracking loop if all objects have ended
             if current_frame == last_frame:
                 break
 
             current_frame += 1
-        
-        print(output_boxes)
+
+        # Save results if set
+        if save_results:
+            _save_results_to_npy(output_boxes, sequence_name)
 
         return output_boxes
 

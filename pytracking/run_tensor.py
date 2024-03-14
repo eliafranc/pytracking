@@ -27,6 +27,7 @@ LABEL_FILE = "labels_events_left.npy"
 def run_tensor(
     tracker_name,
     tracker_param,
+    sequence_name,
     timings_file,
     rgb_frame_dir,
     event_file,
@@ -41,6 +42,7 @@ def run_tensor(
     args:
         tracker_name: Name of tracking method.
         tracker_param: Name of parameter file.
+        sequence_name: Name of the sequence.
         timings_file: Path to a csv file with timestamps.
         rgb_frame_dir: Path to a directory with rgb frames.
         event_file: Path to a hdf5 event file.
@@ -52,6 +54,7 @@ def run_tensor(
     """
     tracker = Tracker(tracker_name, tracker_param)
     tracker.run_on_tensor(
+        sequence_name,
         timings_file,
         rgb_frame_dir,
         event_file,
@@ -83,6 +86,7 @@ def main():
     run_tensor(
         args.tracker_name,
         args.tracker_param,
+        args.sequence,
         f"{PATH_TO_DATA}/{args.sequence}/{TIMINGS}",
         f"{PATH_TO_DATA}/{args.sequence}/{RGB_FRAME_DIR}",
         f"{PATH_TO_DATA}/{args.sequence}/{EVENT_FILE}",
