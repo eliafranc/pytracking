@@ -292,7 +292,7 @@ class RTS(BaseTracker):
         pos_for_clf, target_sz_for_clf, target_scale_for_clf = self.target_state_update_from_bbox(output_state)
 
         # #############################################
-        clf_output_state, clf_pos, clf_target_sz = self.clf_branch.update_state(
+        clf_output_state, clf_pos, clf_target_sz, pred_score = self.clf_branch.update_state(
             track_test_x, clf_scores, sample_coords, pos_for_clf, target_scale_for_clf,
             target_sz_for_clf, self.is_lost_seg, self.seg_too_small)
 
@@ -316,6 +316,7 @@ class RTS(BaseTracker):
             'segmentation_raw': segmentation_output,
             'clf_target_bbox': clf_output_state,
             'clf_search_area': self.clf_branch.search_area_box,
+            'score': pred_score
         }
 
         trust_clf_always = self.params.get('trust_clf_always', False)
@@ -389,12 +390,15 @@ class RTS(BaseTracker):
             elif 'target_bbox' in key:
                 # Update the target box using the merged segmentation mask
                 merged_boxes = {}
+                merged_scores = {}
                 for obj_id, out in out_all.items():
                     seg_mask_im = (torch.from_numpy(out_merged['segmentation']) == int(obj_id)).unsqueeze(0)
                     output_state = masks_to_bboxes(seg_mask_im, fmt='t')
                     output_state = output_state.cpu().view(-1).tolist()
                     merged_boxes[obj_id] = output_state
+                    merged_scores[obj_id] = out['score']
                 out_merged['target_bbox'] = merged_boxes
+                out_merged['score'] = merged_scores
             else:
                 # For fields other than segmentation predictions or target box, only convert the data structure
                 out_merged[key] = {obj_id: out[key] for obj_id, out in out_all.items()}

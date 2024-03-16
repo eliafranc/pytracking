@@ -166,7 +166,7 @@ class ClassifierBranch:
         clf_pos, clf_target_scale, clf_target_sz = self.clf_pos, self.clf_target_scale, self.clf_target_sz
 
         score_map = s[scale_ind, ...]
-        max_score = torch.max(score_map).item()
+        max_score = torch.max(score_map)
         self.search_area_box = torch.cat((sample_coords[scale_ind,[1,0]],
                                           sample_coords[scale_ind,[3,2]] - sample_coords[scale_ind,[1,0]] - 1))
 
@@ -187,7 +187,7 @@ class ClassifierBranch:
         # Update model
         self.update_classifier_model(track_test_x, sample_coords, scale_ind, s, flag)
 
-        return self.clf_output_state, clf_pos, clf_target_sz
+        return self.clf_output_state, clf_pos, clf_target_sz, torch.sigmoid(max_score).item()
 
 
     def update_classifier_model(self, track_test_x, sample_coords, scale_ind, s, flag):
@@ -443,6 +443,7 @@ class ClassifierBranch:
         score_sz = torch.Tensor(list(scores.shape[-2:]))
         score_center = (score_sz - 1)/2
         max_score, max_disp = dcf.max2d(scores)
+        print(max_score)
         _, scale_ind = torch.max(max_score, dim=0)
         max_disp = max_disp[scale_ind,...].float().cpu().view(-1)
         target_disp = max_disp - score_center

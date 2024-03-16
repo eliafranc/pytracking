@@ -731,7 +731,7 @@ class Tracker:
         params.debug = debug_
         params.tracker_name = self.name
         params.param_name = self.parameter_name
-        self._init_visdom(visdom_info, debug_)
+        self._init_visdom({"use_visdom": True}, debug_)
         multiobj_mode = getattr(params, "multiobj_mode", getattr(self.tracker_class, "multiobj_mode", "default"))
 
         if multiobj_mode == "default":
@@ -803,7 +803,7 @@ class Tracker:
         output_boxes[init_frames_for_track_id[1]] = OrderedDict()
         output_masks[init_frames_for_track_id[1]] = OrderedDict()
         for obj_id, bbox in init_bb.items():
-            output_boxes[init_frames_for_track_id[1]][obj_id] = bbox
+            output_boxes[init_frames_for_track_id[1]][obj_id] = (bbox, 1)
             output_masks[init_frames_for_track_id[1]][obj_id] = None
             if vis:
                 initial_tensor = cv.rectangle(
@@ -843,7 +843,7 @@ class Tracker:
                         new_init_obj_ids.append(not_yet_init_ids)
                         new_init_bboxes[not_yet_init_ids] = bbox
                         sequence_obj_ids.append(not_yet_init_ids)
-                        output_boxes[current_frame][not_yet_init_ids] = bbox
+                        output_boxes[current_frame][not_yet_init_ids] = (bbox, 1)
                         output_masks[current_frame][not_yet_init_ids] = None
 
                 # If any new objects are to be tracked, initialize the tracker with the new objects
@@ -871,8 +871,7 @@ class Tracker:
                         # if np.all(np.asarray(state) == np.asarray([0, 0, 1, 1])):
                         #     end_tracker[obj_id] = True
                         #     break
-
-                        output_boxes[current_frame][obj_id] = state
+                        output_boxes[current_frame][obj_id] = (state, out['score'][obj_id])
 
                     if "segmentation" in out:
                         output_masks[current_frame][obj_id] = out["segmentation"]
