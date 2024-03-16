@@ -699,7 +699,7 @@ class Tracker:
 
             return init_bbox, init_object_ids, init_object_ids, sequence_object_ids
 
-        def _save_results_to_npy(output_boxes, sequence_name):
+        def _save_results_to_npy(output_boxes, output_path):
             output_array = np.zeros(
                 sum(len(v) for v in output_boxes.values()),
                 dtype=np.dtype(
@@ -718,10 +718,10 @@ class Tracker:
             )
             index = 0
             for frame, bbox_dict in output_boxes.items():
-                for track_id, bbox in bbox_dict.items():
-                    output_array[index] = (frame, track_id, bbox[0], bbox[1], bbox[2], bbox[3], 1, 1, 1)
+                for track_id, (bbox, score) in bbox_dict.items():
+                    output_array[index] = (frame, track_id, bbox[0], bbox[1], bbox[2], bbox[3], score, 1, 1)
                     index += 1
-            np.save(os.path.join(self.results_dir, sequence_name, "predictions.npy"), output_array)
+            np.save(os.path.join(output_path, "predictions.npy"), output_array)
 
         # Tracker parameter setup
         params = self.get_parameters()
@@ -744,13 +744,17 @@ class Tracker:
             raise ValueError("Unknown multi object mode {}".format(multiobj_mode))
 
         # Setup output directories
-        if save_results or vis:
-            if not os.path.exists(self.results_dir):
+        if not os.path.exists(self.results_dir):
                 os.makedirs(self.results_dir)
-            if not os.path.exists(os.path.join(self.results_dir, sequence_name)):
-                os.makedirs(os.path.join(self.results_dir, sequence_name))
+        if rgb_only:
+            output_dir = os.path.join(self.results_dir, sequence_name + "_rgb_only")
+        else:
+            output_dir = os.path.join(self.results_dir, sequence_name)
+        if save_results or vis:
+            if not os.path.exists(output_dir):
+                os.makedirs(output_dir)
             if vis:
-                vis_output_dir = os.path.join(self.results_dir, sequence_name, "frames")
+                vis_output_dir = os.path.join(output_dir, "frames")
                 if not os.path.exists(vis_output_dir):
                     os.makedirs(vis_output_dir)
 
@@ -862,7 +866,7 @@ class Tracker:
                 if "target_bbox" in out:
                     for obj_id, state in sorted(out["target_bbox"].items()):
                         state = [int(s) for s in state]
-                        bboxes_for_vis.append((obj_id, state))
+                        bboxes_for_vis.append((obj_id, state, out["score"][obj_id]))
                         # Check if the tracker for the object has ended and skip if yes
                         # if end_tracker[obj_id]:
                         #     continue
@@ -877,7 +881,7 @@ class Tracker:
                         output_masks[current_frame][obj_id] = out["segmentation"]
 
                     if vis:
-                        for obj_id, bbox in bboxes_for_vis:
+                        for obj_id, bbox, score in bboxes_for_vis:
                             tensor = cv.rectangle(
                                 tensor,
                                 (bbox[0], bbox[1]),
@@ -885,6 +889,7 @@ class Tracker:
                                 _tracker_disp_colors[obj_id],
                                 1,
                             )
+                            cv.putText(tensor, str(round(score, 3)), (bbox[0], bbox[1] - 7), cv.FONT_HERSHEY_SIMPLEX, 0.4, _tracker_disp_colors[obj_id], 1)
 
                         cv.imwrite(f"{vis_output_dir}/{current_frame:06d}.jpg", tensor)
 
@@ -896,7 +901,7 @@ class Tracker:
 
         # Save results if set
         if save_results:
-            _save_results_to_npy(output_boxes, sequence_name)
+            _save_results_to_npy(output_boxes, output_dir)
 
         return output_boxes
 
