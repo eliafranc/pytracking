@@ -699,7 +699,11 @@ class Tracker:
 
             return init_bbox, init_object_ids, init_object_ids, sequence_object_ids
 
-        def _save_results_to_npy(output_boxes, output_path):
+        def _save_results_to_npy(output_boxes, output_path, rgb_only):
+            if rgb_only:
+                file_path = os.path.join(output_path, "predictions_rgb.npy")
+            else:
+                file_path = os.path.join(output_path, "predictions.npy")
             output_array = np.zeros(
                 sum(len(v) for v in output_boxes.values()),
                 dtype=np.dtype(
@@ -721,7 +725,7 @@ class Tracker:
                 for track_id, (bbox, score) in bbox_dict.items():
                     output_array[index] = (frame, track_id, bbox[0], bbox[1], bbox[2], bbox[3], score, 1, 1)
                     index += 1
-            np.save(os.path.join(output_path, "predictions.npy"), output_array)
+            np.save(file_path, output_array)
 
         # Tracker parameter setup
         params = self.get_parameters()
@@ -746,15 +750,15 @@ class Tracker:
         # Setup output directories
         if not os.path.exists(self.results_dir):
                 os.makedirs(self.results_dir)
-        if rgb_only:
-            output_dir = os.path.join(self.results_dir, sequence_name + "_rgb_only")
-        else:
-            output_dir = os.path.join(self.results_dir, sequence_name)
+        sequence_output_dir = os.path.join(self.results_dir, sequence_name)
         if save_results or vis:
-            if not os.path.exists(output_dir):
-                os.makedirs(output_dir)
+            if not os.path.exists(sequence_output_dir):
+                os.makedirs(sequence_output_dir)
             if vis:
-                vis_output_dir = os.path.join(output_dir, "frames")
+                if rgb_only:
+                    vis_output_dir = os.path.join(sequence_output_dir, "frames_rgb")
+                else:
+                    vis_output_dir = os.path.join(sequence_output_dir, "frames")
                 if not os.path.exists(vis_output_dir):
                     os.makedirs(vis_output_dir)
 
@@ -901,7 +905,7 @@ class Tracker:
 
         # Save results if set
         if save_results:
-            _save_results_to_npy(output_boxes, output_dir)
+            _save_results_to_npy(output_boxes, sequence_output_dir, rgb_only)
 
         return output_boxes
 
