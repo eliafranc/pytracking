@@ -24,7 +24,7 @@ DTYPE = dtype = np.dtype(
 )
 
 
-def fetch_gt_for_sequence(gt: np.ndarray, frame_offset: int):
+def fetch_gt_for_sequence(gt: np.ndarray, frame_offset: int, debug: int = 0) -> np.ndarray:
     """Fetch the ground truth for a sequence.
     args:
         gt: Ground truth for all sequences.
@@ -36,10 +36,10 @@ def fetch_gt_for_sequence(gt: np.ndarray, frame_offset: int):
     filtered_labels = np.zeros((len(gt),), dtype=DTYPE)
     idx_offset = 0
     for track_id in track_ids:
-        # print(gt[gt['track_id'] == track_id])
-        diff = np.diff(gt[gt["track_id"] == track_id]["frame"])
-        if any(diff > 1):
-            print(f"Track {track_id} has missing frames at {np.where(diff > 1)}.")
+        if debug > 0:
+            diff = np.diff(gt[gt["track_id"] == track_id]["frame"])
+            if any(diff > 1):
+                print(f"Track {track_id} has missing frames at {np.where(diff > 1)}.")
         initial_frame = gt[gt["track_id"] == track_id][0]["frame"]
         track_labels = gt[gt["track_id"] == track_id]
         filtered_track_labels = track_labels[track_labels["frame"] >= frame_offset + initial_frame]
@@ -48,8 +48,9 @@ def fetch_gt_for_sequence(gt: np.ndarray, frame_offset: int):
     pre_filter = len(filtered_labels)
     filtered_labels = filtered_labels[filtered_labels[:] != np.array((0, 0, 0, 0, 0, 0, 0, 0, 0), dtype=DTYPE)]
     post_filter = len(filtered_labels)
-    if (pre_filter - post_filter) % 4 != 0:
-        print(f"Filtered out {pre_filter - post_filter} labels.")
+    if debug > 0:
+        if (pre_filter - post_filter) % frame_offset != 0:
+            print(f"Uncommon umber of filteredl labels: {pre_filter - post_filter} labels.")
     sorted_index = np.argsort(filtered_labels, order=["frame", "track_id"])
     filtered_labels_sorted = filtered_labels[sorted_index]
 
@@ -64,6 +65,7 @@ def main():
     parser.add_argument("frame_offset", type=int, help="Offset for the sequence.")
     parser.add_argument("sequences", type=str, help="Path to yaml file with sequences.")
     parser.add_argument("output_dir", type=str, help="Path to the output directory.")
+    parser.add_argument("--debug", type=int, default=0, help="Debug level.")
     args = parser.parse_args()
 
     sequences = yaml.safe_load(open(args.sequences, "r"))["sequences"]
@@ -74,7 +76,7 @@ def main():
 
         if os.path.exists(gt_path):
             gt = np.load(gt_path)
-            filtered_gt = fetch_gt_for_sequence(gt, args.frame_offset)
+            filtered_gt = fetch_gt_for_sequence(gt, args.frame_offset, args.debug)
             output_path = os.path.join(args.output_dir, sequence, f"labels.npy")
             if os.path.exists(os.path.dirname(output_path)):
                 np.save(output_path, filtered_gt)
