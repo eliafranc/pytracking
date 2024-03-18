@@ -2,6 +2,7 @@ import os
 import sys
 import argparse
 import numpy as np
+import yaml
 
 env_path = os.path.join(os.path.dirname(__file__), "..")
 if env_path not in sys.path:
@@ -61,12 +62,15 @@ def main():
     parser = argparse.ArgumentParser(description="Fetch ground truth files and filter out frames if necessary.")
     parser.add_argument("ds_root", type=str, help="Dataset root.")
     parser.add_argument("frame_offset", type=int, help="Offset for the sequence.")
+    parser.add_argument("sequences", type=str, help="Path to yaml file with sequences.")
     parser.add_argument("output_dir", type=str, help="Path to the output directory.")
     args = parser.parse_args()
 
-    for sequence in os.listdir(args.ds_root):
+    sequences = yaml.safe_load(open(args.sequences, "r"))["sequences"]
+
+    for sequence in sequences:
+        print(f"Processing sequence {sequence}.")
         gt_path = os.path.join(args.ds_root, sequence, GT_FILE_NAME)
-        print(sequence)
 
         if os.path.exists(gt_path):
             gt = np.load(gt_path)
