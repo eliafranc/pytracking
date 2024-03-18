@@ -33,6 +33,7 @@ def run_tensor(
     event_file,
     homography_file,
     label_file,
+    delta_t,
     debug=None,
     vis=False,
     rgb_only=False,
@@ -60,6 +61,7 @@ def run_tensor(
         event_file,
         homography_file,
         label_file,
+        delta_t=delta_t,
         debug=debug,
         vis=vis,
         rgb_only=rgb_only,
@@ -73,6 +75,7 @@ def main():
     parser.add_argument("tracker_name", type=str, help="Name of tracking method.")
     parser.add_argument("tracker_param", type=str, help="Name of parameter file.")
     parser.add_argument("sequence", type=str, help="Path to a sequence firectory.")
+    parser.add_argument("--delta_t", type=int, default=10, help="Time delta (ms) to use for the input tensor.")
     parser.add_argument("--debug", type=int, default=0, help="Debug level.")
     parser.add_argument("--visualize", dest="visualize", action="store_true", help="Visualize bounding boxes")
     parser.set_defaults(visualize=False)
@@ -92,6 +95,7 @@ def main():
         f"{PATH_TO_DATA}/{args.sequence}/{EVENT_FILE}",
         f"{PATH_TO_DATA}/{args.sequence}/{HOMOGRAPHY_FILE}",
         f"{PATH_TO_DATA}/{args.sequence}/{LABEL_FILE}",
+        delta_t=args.delta_t,
         debug=args.debug,
         vis=args.visualize,
         rgb_only=args.rgb_only,

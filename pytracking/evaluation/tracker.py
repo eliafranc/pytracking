@@ -630,8 +630,8 @@ class Tracker:
         event_file,
         homography_file,
         label_file,
+        delta_t=10,
         debug=None,
-        visdom_info=None,
         vis=False,
         rgb_only=False,
         save_results=False,
@@ -699,11 +699,11 @@ class Tracker:
 
             return init_bbox, init_object_ids, init_object_ids, sequence_object_ids
 
-        def _save_results_to_npy(output_boxes, output_path, rgb_only):
+        def _save_results_to_npy(output_boxes, output_path, rgb_only, delta_t):
             if rgb_only:
                 file_path = os.path.join(output_path, "predictions_rgb.npy")
             else:
-                file_path = os.path.join(output_path, "predictions.npy")
+                file_path = os.path.join(output_path, f"predictions_{delta_t}ms.npy")
             output_array = np.zeros(
                 sum(len(v) for v in output_boxes.values()),
                 dtype=np.dtype(
@@ -749,7 +749,7 @@ class Tracker:
 
         # Setup output directories
         if not os.path.exists(self.results_dir):
-                os.makedirs(self.results_dir)
+            os.makedirs(self.results_dir)
         sequence_output_dir = os.path.join(self.results_dir, sequence_name)
         if save_results or vis:
             if not os.path.exists(sequence_output_dir):
@@ -758,7 +758,7 @@ class Tracker:
                 if rgb_only:
                     vis_output_dir = os.path.join(sequence_output_dir, "frames_rgb")
                 else:
-                    vis_output_dir = os.path.join(sequence_output_dir, "frames")
+                    vis_output_dir = os.path.join(sequence_output_dir, f"frames_{delta_t}ms")
                 if not os.path.exists(vis_output_dir):
                     os.makedirs(vis_output_dir)
 
@@ -785,7 +785,7 @@ class Tracker:
 
         # Get the initial tensor for the first frame
         initial_tensor = _create_tensor(
-            init_frames_for_track_id[1], rgb_frame_dir, event_reader, homography, timings, 3, 10, rgb_only
+            init_frames_for_track_id[1], rgb_frame_dir, event_reader, homography, timings, 3, delta_t, rgb_only
         )
 
         # Set up dictionaries and lists for tracking
@@ -829,7 +829,9 @@ class Tracker:
 
         while True:
             print(current_frame)
-            tensor = _create_tensor(current_frame, rgb_frame_dir, event_reader, homography, timings, 3, 10, rgb_only)
+            tensor = _create_tensor(
+                current_frame, rgb_frame_dir, event_reader, homography, timings, 3, delta_t, rgb_only
+            )
             if tensor is None:
                 break
 
@@ -879,7 +881,7 @@ class Tracker:
                         # if np.all(np.asarray(state) == np.asarray([0, 0, 1, 1])):
                         #     end_tracker[obj_id] = True
                         #     break
-                        output_boxes[current_frame][obj_id] = (state, out['score'][obj_id])
+                        output_boxes[current_frame][obj_id] = (state, out["score"][obj_id])
 
                     if "segmentation" in out:
                         output_masks[current_frame][obj_id] = out["segmentation"]
@@ -893,7 +895,15 @@ class Tracker:
                                 _tracker_disp_colors[obj_id],
                                 1,
                             )
-                            cv.putText(tensor, str(round(score, 3)), (bbox[0], bbox[1] - 7), cv.FONT_HERSHEY_SIMPLEX, 0.4, _tracker_disp_colors[obj_id], 1)
+                            cv.putText(
+                                tensor,
+                                str(round(score, 3)),
+                                (bbox[0], bbox[1] - 7),
+                                cv.FONT_HERSHEY_SIMPLEX,
+                                0.4,
+                                _tracker_disp_colors[obj_id],
+                                1,
+                            )
 
                         cv.imwrite(f"{vis_output_dir}/{current_frame:06d}.jpg", tensor)
 
@@ -905,7 +915,7 @@ class Tracker:
 
         # Save results if set
         if save_results:
-            _save_results_to_npy(output_boxes, sequence_output_dir, rgb_only)
+            _save_results_to_npy(output_boxes, sequence_output_dir, rgb_only, delta_t)
 
         return output_boxes
 
