@@ -74,8 +74,8 @@ def main():
             output_path = os.path.join(args.output_dir, sequence, f"labels.npy")
             if os.path.exists(os.path.dirname(output_path)):
                 np.save(output_path, filtered_gt)
-            # else:
-            #     print(f"Output directory {os.path.dirname(output_path)} does not exist.")
+            else:
+                print(f"Output directory {os.path.dirname(output_path)} does not exist.")
         else:
             print(f"Ground truth file {gt_path} does not exist.")
             continue
