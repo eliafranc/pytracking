@@ -43,7 +43,7 @@ def fetch_gt_for_sequence(gt: np.ndarray, frame_offset: int):
         track_labels = gt[gt["track_id"] == track_id]
         filtered_track_labels = track_labels[track_labels["frame"] >= frame_offset + initial_frame]
         filtered_labels[idx_offset : idx_offset + len(filtered_track_labels)] = filtered_track_labels
-        idx_offset = len(filtered_track_labels)
+        idx_offset = idx_offset + len(filtered_track_labels)
     pre_filter = len(filtered_labels)
     filtered_labels = filtered_labels[filtered_labels[:] != np.array((0, 0, 0, 0, 0, 0, 0, 0, 0), dtype=DTYPE)]
     post_filter = len(filtered_labels)
@@ -51,6 +51,8 @@ def fetch_gt_for_sequence(gt: np.ndarray, frame_offset: int):
         print(f"Filtered out {pre_filter - post_filter} labels.")
     sorted_index = np.argsort(filtered_labels, order=["frame", "track_id"])
     filtered_labels_sorted = filtered_labels[sorted_index]
+
+    # TODO: +1 for track_id
 
     return filtered_labels_sorted
 

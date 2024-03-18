@@ -678,14 +678,16 @@ class Tracker:
 
             return final_image
 
-        def _init_bbox_from_labels(labels, frame_number):
-            x = int(np.clip(labels[frame_number]["x"] - 2, 0, 1280))
-            y = int(np.clip(labels[frame_number]["y"] - 1, 0, 720))
-            w = int(np.clip(labels[frame_number]["w"] + 4, 0, 1280))
-            h = int(np.clip(labels[frame_number]["h"] + 2, 0, 720))
+        def _init_bbox_from_labels(labels, init_frames_for_track_id, obj_id):
+            obj_specific_labels = labels[labels["track_id"] == obj_id - 1]
+            initial_frame = obj_specific_labels[obj_specific_labels["frame"] == init_frames_for_track_id[obj_id]]
+            x = int(np.clip(initial_frame["x"], 0, 1280))
+            y = int(np.clip(initial_frame["y"], 0, 720))
+            w = int(np.clip(initial_frame["w"], 0, 1280))
+            h = int(np.clip(initial_frame["h"], 0, 720))
             return [x, y, w, h]
 
-        def _get_tracker_init_dictionaries(init_index_for_track_id, init_frames_for_track_id, labels):
+        def _get_tracker_init_dictionaries(init_frames_for_track_id, labels):
             init_bbox = OrderedDict()
             init_object_ids = []
             sequence_object_ids = []
@@ -695,7 +697,7 @@ class Tracker:
                 if value == lowest_frame_number:
                     init_object_ids.append(obj_id)
                     sequence_object_ids.append(obj_id)
-                    init_bbox[obj_id] = _init_bbox_from_labels(labels, init_index_for_track_id[obj_id])
+                    init_bbox[obj_id] = _init_bbox_from_labels(labels, init_frames_for_track_id, obj_id)
 
             return init_bbox, init_object_ids, init_object_ids, sequence_object_ids
 
@@ -772,13 +774,9 @@ class Tracker:
         # Get initial frame numbers and indices for labels for each object
         unique_track_ids = np.unique([label["track_id"] for label in labels])
         init_frames_for_track_id = {}
-        init_index_for_track_id = {}
         inital_label_offset = 4
         for track_id in unique_track_ids:
             # Set key for dictionary to start with 1 instead of 0 as it is necessary for the tracker to work
-            init_index_for_track_id[track_id + 1] = int(
-                np.where(labels["track_id"] == track_id)[0][0] + inital_label_offset
-            )
             init_frames_for_track_id[track_id + 1] = int(
                 labels[np.where(labels["track_id"] == track_id)]["frame"][0] + inital_label_offset
             )
@@ -792,7 +790,7 @@ class Tracker:
         output_boxes = OrderedDict()
         output_masks = OrderedDict()
         init_bb, init_obj_ids, obj_ids, sequence_obj_ids = _get_tracker_init_dictionaries(
-            init_index_for_track_id, init_frames_for_track_id, labels
+            init_frames_for_track_id, labels
         )
 
         # Initialize tracker for objects appearing first
@@ -849,7 +847,7 @@ class Tracker:
                     new_init_obj_ids = []
                     new_init_bboxes = OrderedDict()
                     if current_frame == init_frames_for_track_id.get(not_yet_init_ids):
-                        bbox = _init_bbox_from_labels(labels, init_index_for_track_id[not_yet_init_ids])
+                        bbox = _init_bbox_from_labels(labels, init_frames_for_track_id, not_yet_init_ids)
                         new_init_obj_ids.append(not_yet_init_ids)
                         new_init_bboxes[not_yet_init_ids] = bbox
                         sequence_obj_ids.append(not_yet_init_ids)
@@ -872,16 +870,15 @@ class Tracker:
                 if "target_bbox" in out:
                     for obj_id, state in sorted(out["target_bbox"].items()):
                         state = [int(s) for s in state]
-                        bboxes_for_vis.append((obj_id, state, out["score"][obj_id]))
-                        # Check if the tracker for the object has ended and skip if yes
-                        # if end_tracker[obj_id]:
-                        #     continue
 
-                        # If bounding box infeasible stop tracker for object
-                        # if np.all(np.asarray(state) == np.asarray([0, 0, 1, 1])):
-                        #     end_tracker[obj_id] = True
-                        #     break
-                        output_boxes[current_frame][obj_id] = (state, out["score"][obj_id])
+                        # If bounding box infeasible remove respective dict entry
+                        if not np.all(np.asarray(state) == np.asarray([0, 0, 1, 1])):
+                            bboxes_for_vis.append((obj_id, state, out["score"][obj_id]))
+                            output_boxes[current_frame][obj_id] = (state, out["score"][obj_id])
+
+                    for obj_id in sequence_obj_ids:
+                        if output_boxes[current_frame][obj_id] == None:
+                            del output_boxes[current_frame][obj_id]
 
                     if "segmentation" in out:
                         output_masks[current_frame][obj_id] = out["segmentation"]
