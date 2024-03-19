@@ -12,7 +12,16 @@ from prophesee.metrics.coco_eval import evaluate_detection
 from prophesee.io.box_loading import to_prophesee
 
 
-prediction_type_suffix = {"rgb": "rgb", "5": "5ms", "10": "10ms"}
+prediction_type_suffix = {
+    "rgb": "rgb",
+    "2": "2ms",
+    "5": "5ms",
+    "10": "10ms",
+    "15": "15ms",
+    "20": "20ms",
+    "25": "25ms",
+    "30": "30ms",
+}
 
 
 def run_evaluation_on_sequence(gt_path, pred_path, save_evaluation=False):
@@ -45,6 +54,8 @@ def run_evaluation(results_root, pred_type, save_evaluation=False):
     ), f"Invalid prediction type. Must be one of {prediction_type_suffix.keys()}."
 
     for sequence in os.listdir(results_root):
+        if not os.path.isdir(os.path.join(results_root, sequence)):
+            continue
         output = os.path.join(results_root, sequence, f"evaluation_{prediction_type_suffix.get(pred_type)}.yml")
 
         gt_path = os.path.join(results_root, sequence, "labels.npy")
@@ -55,6 +66,34 @@ def run_evaluation(results_root, pred_type, save_evaluation=False):
             print(metrics)
             with open(output, "w") as f:
                 yaml.dump(metrics, f)
+
+    if save_evaluation:
+        map = []
+        map_50 = []
+        map_75 = []
+        map_s = []
+        map_m = []
+        map_l = []
+        for sequence in os.listdir(results_root):
+            with open(output, "r") as f:
+                data = yaml.safe_load(f)
+                map.append(data["AP"])
+                map_50.append(data["AP_50"])
+                map_75.append(data["AP_75"])
+                map_s.append(data["AP_S"])
+                map_m.append(data["AP_M"])
+                map_l.append(data["AP_L"])
+        averaged_metrics = {
+            "AP": float(np.mean(map)),
+            "AP_50": float(np.mean(map_50)),
+            "AP_75": float(np.mean(map_75)),
+            "AP_S": float(np.mean(map_s)),
+            "AP_M": float(np.mean(map_m)),
+            "AP_L": float(np.mean(map_l)),
+        }
+        output = os.path.join(results_root, f"mean_evaluation_{prediction_type_suffix.get(pred_type)}.yml")
+        with open(output, "w") as f:
+            yaml.dump(averaged_metrics, f)
 
 
 def main():

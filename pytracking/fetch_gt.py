@@ -54,7 +54,7 @@ def fetch_gt_for_sequence(gt: np.ndarray, frame_offset: int, debug: int = 0) -> 
     sorted_index = np.argsort(filtered_labels, order=["frame", "track_id"])
     filtered_labels_sorted = filtered_labels[sorted_index]
 
-    # TODO: +1 for track_id
+    filtered_labels_sorted["track_id"] = filtered_labels_sorted["track_id"] + 1
 
     return filtered_labels_sorted
 
