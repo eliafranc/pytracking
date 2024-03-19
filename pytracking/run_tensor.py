@@ -86,21 +86,32 @@ def main():
 
     args = parser.parse_args()
 
-    run_tensor(
-        args.tracker_name,
-        args.tracker_param,
-        args.sequence,
-        f"{PATH_TO_DATA}/{args.sequence}/{TIMINGS}",
-        f"{PATH_TO_DATA}/{args.sequence}/{RGB_FRAME_DIR}",
-        f"{PATH_TO_DATA}/{args.sequence}/{EVENT_FILE}",
-        f"{PATH_TO_DATA}/{args.sequence}/{HOMOGRAPHY_FILE}",
-        f"{PATH_TO_DATA}/{args.sequence}/{LABEL_FILE}",
-        delta_t=args.delta_t,
-        debug=args.debug,
-        vis=args.visualize,
-        rgb_only=args.rgb_only,
-        save_results=args.save_results,
-    )
+    if args.delta_t != 10:
+        assert not args.rgb_only, "Time delta can only be changed when not using RGB frames."
+
+    for sequence in [
+        "2024_01_10_113513_drone_25_001",
+        "2024_01_10_160626_back_drive_000",
+        "2024_01_10_162004_focus_000",
+        "2024_01_10_162614_recording_000",
+        "2024_01_10_162614_recording_012",
+        "2024_01_10_163531_recording_010",
+    ]:
+        run_tensor(
+            args.tracker_name,
+            args.tracker_param,
+            sequence,
+            f"{PATH_TO_DATA}/{sequence}/{TIMINGS}",
+            f"{PATH_TO_DATA}/{sequence}/{RGB_FRAME_DIR}",
+            f"{PATH_TO_DATA}/{sequence}/{EVENT_FILE}",
+            f"{PATH_TO_DATA}/{sequence}/{HOMOGRAPHY_FILE}",
+            f"{PATH_TO_DATA}/{sequence}/{LABEL_FILE}",
+            delta_t=args.delta_t,
+            debug=args.debug,
+            vis=args.visualize,
+            rgb_only=args.rgb_only,
+            save_results=args.save_results,
+        )
 
 
 if __name__ == "__main__":
