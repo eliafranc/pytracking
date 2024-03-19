@@ -144,7 +144,7 @@ def _coco_eval(gts, detections, height, width, labelmap=("drone"), return_aps: b
             # info: https://stackoverflow.com/questions/8391411/how-to-block-calls-to-print
             coco_eval.summarize()
         for idx, key in enumerate(out_keys):
-            out_dict[key] = coco_eval.stats[idx]
+            out_dict[key] = float(coco_eval.stats[idx])
         return out_dict
     # Print the whole summary instead without return
     coco_eval.summarize()

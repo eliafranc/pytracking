@@ -52,6 +52,7 @@ def run_evaluation(results_root, pred_type, save_evaluation=False):
         metrics = run_evaluation_on_sequence(gt_path, pred_path, save_evaluation)
 
         if metrics is not None:
+            print(metrics)
             with open(output, "w") as f:
                 yaml.dump(metrics, f)
 
