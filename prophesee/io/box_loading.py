@@ -48,47 +48,41 @@ def reformat_boxes(boxes):
         return boxes
 
 
-def to_prophesee(labels_list: list, predictions_list: list):
+def to_prophesee(labels: np.ndarray, predictions: np.ndarray):
     """Converts gt and dt boxes to the format used by Prophesee.
     Args:
         gt_boxes: Ground truth boxes.
         dt_boxes: Predicted boxes.
     """
-    assert len(labels_list) == len(predictions_list)
-    labels_list_prophesee = []
-    predictions_list_prophesee = []
 
-    # As our labels and predictions do not have a timestamp, rather a frame number, we will use the frame number for t
+    labels_prophesee = np.zeros((len(labels),), dtype=BBOX_DTYPE)
+    predictions_prophesee = np.zeros((len(predictions),), dtype=BBOX_DTYPE)
 
-    for sequence_label, sequence_prediction in zip(labels_list, predictions_list):
-
-        labels_prophesee = np.zeros((len(sequence_label),), dtype=BBOX_DTYPE)
-        predictions_prophesee = np.zeros((len(sequence_prediction),), dtype=BBOX_DTYPE)
-
-        #TODO: At some point need to fix the offset for initial bounding box (4 per obj_id) for the labels
-
-        for name in BBOX_DTYPE.names:
-            if name == 't':
-                labels_prophesee[name] = np.asarray(sequence_label['frame'], dtype=BBOX_DTYPE[name])
-                predictions_prophesee[name] = np.asarray(sequence_prediction['frame'], dtype=BBOX_DTYPE[name])
-            elif name == 'track_id' and min(sequence_label[name]) == 0:
-                labels_prophesee[name] = np.asarray(sequence_label[name] + 1, dtype=BBOX_DTYPE[name])
-                predictions_prophesee[name] = np.asarray(sequence_prediction[name], dtype=BBOX_DTYPE[name])
-            else:
-                labels_prophesee[name] = np.asarray(sequence_label[name], dtype=BBOX_DTYPE[name])
-                predictions_prophesee[name] = np.asarray(sequence_prediction[name], dtype=BBOX_DTYPE[name])
-
-        labels_list_prophesee.append(labels_prophesee)
-        predictions_list_prophesee.append(predictions_prophesee)
+    for name in BBOX_DTYPE.names:
+        if name == "t":
+            labels_prophesee[name] = np.asarray(labels["frame"], dtype=BBOX_DTYPE[name])
+            predictions_prophesee[name] = np.asarray(predictions["frame"], dtype=BBOX_DTYPE[name])
+        elif name == "track_id" and min(labels[name]) == 0:
+            labels_prophesee[name] = np.asarray(labels[name] + 1, dtype=BBOX_DTYPE[name])
+            predictions_prophesee[name] = np.asarray(predictions[name], dtype=BBOX_DTYPE[name])
+        else:
+            labels_prophesee[name] = np.asarray(labels[name], dtype=BBOX_DTYPE[name])
+            predictions_prophesee[name] = np.asarray(predictions[name], dtype=BBOX_DTYPE[name])
 
     return labels_prophesee, predictions_prophesee
 
+
 def main():
-    test_label = np.load('/home/efranc/data/2024_01_10_162004_focus_000/labels_events_left.npy')
-    test_prediction = np.load('/home/efranc/pytracking/pytracking/experiments/rts/rts50/2024_01_10_162004_focus_000/predictions.npy')
+    test_label = np.load(
+        "/home/efranc/pytracking/pytracking/experiments/rts/rts50/2024_01_10_162004_focus_000/labels.npy"
+    )
+    test_prediction = np.load(
+        "/home/efranc/pytracking/pytracking/experiments/rts/rts50/2024_01_10_162004_focus_000/predictions_rgb.npy"
+    )
     labels_p, predictions_p = to_prophesee([test_label], [test_prediction])
     print(labels_p.shape)
     print(predictions_p.shape)
+
 
 if __name__ == "__main__":
     main()
