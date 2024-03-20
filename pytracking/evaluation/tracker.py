@@ -196,7 +196,7 @@ class Tracker:
             self.init_visualization()
 
         # Get init information
-        is_single_object = not seq.multiobj_mode
+        is_single_object = False
 
         if multiobj_mode is None:
             multiobj_mode = getattr(params, "multiobj_mode", getattr(self.tracker_class, "multiobj_mode", "default"))
@@ -489,7 +489,9 @@ class Tracker:
         elif tracker.params.visualization:
             self.visualize(initial_tensor, bboxes, segmentation)
 
-        for frame_num, rgb_frame in enumerate(rgb_frames[1:], start=int(init_frames_for_track_id[1] + 1)):
+        start_frame = int(init_frames_for_track_id[1] + 1)
+
+        for frame_num, rgb_frame in enumerate(rgb_frames[start_frame:], start=start_frame):
             while True:
                 if not self.pause_mode:
                     break
@@ -503,7 +505,6 @@ class Tracker:
                 frame_num, rgb_frame_dir, rgb_frames, event_reader, homography, timings, 3, delta_t, rgb_only
             )
 
-            # TODO: Here
             info = OrderedDict()
             info["previous_output"] = prev_output
             if len(unique_track_ids) > len(sequence_obj_ids):

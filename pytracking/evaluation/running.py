@@ -136,7 +136,8 @@ def _save_tracker_tensor_output(seq: dict, tracker: Tracker, output: dict):
     segmentation_path = os.path.join(tracker.segmentation_dir, seq["sequence_name"])
 
     labels = np.load(seq["label_file"])
-    first_frame = labels[0]["frame"]
+    first_frame = int(labels[0]["frame"]) + 4
+    print(first_frame)
     frames = sorted(os.listdir(seq["rgb_frame_dir"]))[first_frame:]
     frame_names = [os.path.splitext(os.path.basename(f))[0] for f in frames]
 
@@ -189,6 +190,8 @@ def _save_tracker_tensor_output(seq: dict, tracker: Tracker, output: dict):
                 save_time(timings_file, data)
 
         elif key == "segmentation":
+            print(len(frame_names))
+            print(len(data))
             assert len(frame_names) == len(data)
             if not os.path.exists(segmentation_path):
                 os.makedirs(segmentation_path)
@@ -275,6 +278,7 @@ def run_tensor_sequence(
             tracker.name, tracker.parameter_name, tracker.run_id, seq["sequence_name"]
         )
     )
+    print(debug)
 
     if debug:
         output = tracker.run_tensor_sequence(
@@ -398,10 +402,10 @@ def _build_sequence_dict(seq):
     LABEL_FILE = "labels_events_left.npy"
     sequence_dict = {
         "sequence_name": seq,
-        "timings_file": os.path.join(PATH_TO_DATA, TIMINGS),
-        "rgb_frame_dir": os.path.join(PATH_TO_DATA, RGB_FRAME_DIR),
-        "event_file": os.path.join(PATH_TO_DATA, EVENT_FILE),
-        "homography_file": os.path.join(PATH_TO_DATA, HOMOGRAPHY_FILE),
-        "label_file": os.path.join(PATH_TO_DATA, LABEL_FILE),
+        "timings_file": os.path.join(PATH_TO_DATA, seq, TIMINGS),
+        "rgb_frame_dir": os.path.join(PATH_TO_DATA, seq, RGB_FRAME_DIR),
+        "event_file": os.path.join(PATH_TO_DATA, seq, EVENT_FILE),
+        "homography_file": os.path.join(PATH_TO_DATA, seq, HOMOGRAPHY_FILE),
+        "label_file": os.path.join(PATH_TO_DATA, seq, LABEL_FILE),
     }
     return sequence_dict
