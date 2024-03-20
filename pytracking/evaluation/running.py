@@ -260,18 +260,18 @@ def run_tensor_sequence(
 ):
     """Runs a tracker on a sequence."""
 
-    # def _results_exist():
-    #     label_file = np.load(label_file)
-    #     object_ids = np.unique(label_file["track_id"]) + 1
-    #     bbox_files = ["{}/{}_{}.txt".format(tracker.results_dir, seq["sequence_name"], obj_id) for obj_id in object_ids]
-    #     missing = [not os.path.isfile(f) for f in bbox_files]
-    #     return sum(missing) == 0
+    def _results_exist(label_file):
+        label_file = np.load(label_file)
+        object_ids = np.unique(label_file["track_id"]) + 1
+        bbox_files = ["{}/{}_{}.txt".format(tracker.results_dir, seq["sequence_name"], obj_id) for obj_id in object_ids]
+        missing = [not os.path.isfile(f) for f in bbox_files]
+        return sum(missing) == 0
 
-    # visdom_info = {} if visdom_info is None else visdom_info
+    visdom_info = {} if visdom_info is None else visdom_info
 
-    # if _results_exist() and not debug:
-    #     print("FPS: {}".format(-1))
-    #     return
+    if _results_exist(seq['label_file']) and not debug:
+        print("FPS: {}".format(-1))
+        return
 
     print(
         "Tracker: {} {} {} ,  Sequence: {}".format(
