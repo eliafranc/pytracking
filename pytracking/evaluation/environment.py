@@ -21,6 +21,7 @@ class EnvSettings:
         self.trackingnet_path = ''
         self.oxuva_path = ''
         self.davis_dir = ''
+        self.evdrone_path = ''
         self.youtubevos_dir = ''
 
         self.got_packed_results_path = ''
