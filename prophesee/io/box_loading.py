@@ -28,6 +28,14 @@ BBOX_DTYPE = np.dtype(
 )
 
 
+def calculate_padding(w, h):
+    pad_w = int(2 * 0.08 * w)
+    pad_h = int(2 * 0.1 * h)
+    pad_x = round(pad_w / 2)
+    pad_y = round(pad_h * 0.8)
+    return {"x": pad_x, "y": pad_y, "w": pad_w, "h": pad_h}
+
+
 def reformat_boxes(boxes):
     """ReFormat boxes according to new rule
     This allows to be backward-compatible with imerit annotation.
@@ -68,6 +76,13 @@ def to_prophesee(labels: np.ndarray, predictions: np.ndarray):
         else:
             labels_prophesee[name] = np.asarray(labels[name], dtype=BBOX_DTYPE[name])
             predictions_prophesee[name] = np.asarray(predictions[name], dtype=BBOX_DTYPE[name])
+
+    for i in len(predictions_prophesee):
+        padding = calculate_padding(predictions_prophesee[i]["w"], predictions_prophesee[i]["h"])
+        predictions_prophesee[i]["x"] -= padding["x"]
+        predictions_prophesee[i]["y"] -= padding["y"]
+        predictions_prophesee[i]["w"] += padding["w"]
+        predictions_prophesee[i]["h"] += padding["h"]
 
     return labels_prophesee, predictions_prophesee
 

@@ -165,6 +165,52 @@ class Tracker:
         output = self._track_sequence(tracker, seq, init_info)
         return output
 
+    def run_tensor_sequence(
+        self, seq, delta_t=10, rgb_only=False, visualization=None, debug=None, visdom_info=None, multiobj_mode=None
+    ):
+        """Run tracker on sequence.
+        args:
+            seq: Sequence to run the tracker on.
+            visualization: Set visualization flag (None means default value specified in the parameters).
+            debug: Set debug level (None means default value specified in the parameters).
+            visdom_info: Visdom info.
+            multiobj_mode: Which mode to use for multiple objects.
+        """
+        params = self.get_parameters()
+        visualization_ = visualization
+
+        debug_ = debug
+        if debug is None:
+            debug_ = getattr(params, "debug", 0)
+        if visualization is None:
+            if debug is None:
+                visualization_ = getattr(params, "visualization", False)
+            else:
+                visualization_ = True if debug else False
+
+        params.visualization = visualization_
+        params.debug = debug_
+
+        self._init_visdom(visdom_info, debug_)
+        if visualization_ and self.visdom is None:
+            self.init_visualization()
+
+        # Get init information
+        is_single_object = not seq.multiobj_mode
+
+        if multiobj_mode is None:
+            multiobj_mode = getattr(params, "multiobj_mode", getattr(self.tracker_class, "multiobj_mode", "default"))
+
+        if multiobj_mode == "default" or is_single_object:
+            tracker = self.create_tracker(params)
+        elif multiobj_mode == "parallel":
+            tracker = MultiObjectWrapper(self.tracker_class, params, self.visdom)
+        else:
+            raise ValueError("Unknown multi object mode {}".format(multiobj_mode))
+
+        output = self._track_tensor_sequence(tracker, seq, delta_t, rgb_only)
+        return output
+
     def _track_sequence(self, tracker, seq, init_info):
         # Define outputs
         # Each field in output is a list containing tracker prediction for each frame.
@@ -269,6 +315,239 @@ class Tracker:
 
         # next two lines are needed for oxuva output format.
         output["image_shape"] = image.shape[:2]
+        output["object_presence_score_threshold"] = tracker.params.get("object_presence_score_threshold", 0.55)
+
+        return output
+
+    def _track_tensor_sequence(self, tracker, seq, delta_t, rgb_only):
+        # Define outputs
+        # Each field in output is a list containing tracker prediction for each frame.
+
+        # In case of single object tracking mode:
+        # target_bbox[i] is the predicted bounding box for frame i
+        # time[i] is the processing time for frame i
+        # segmentation[i] is the segmentation mask for frame i (numpy array)
+
+        # In case of multi object tracking mode:
+        # target_bbox[i] is an OrderedDict, where target_bbox[i][obj_id] is the predicted box for target obj_id in
+        # frame i
+        # time[i] is either the processing time for frame i, or an OrderedDict containing processing times for each
+        # object in frame i
+        # segmentation[i] is the multi-label segmentation mask for frame i (numpy array)
+
+        output = {"target_bbox": [], "time": [], "segmentation": [], "object_presence_score": []}
+        sequence_name = seq["sequence_name"]
+        timings_file = seq["timings_file"]
+        rgb_frame_dir = seq["rgb_frame_dir"]
+        event_file = seq["event_file"]
+        homography_file = seq["homography_file"]
+        label_file = seq["label_file"]
+
+        def _create_tensor(
+            frame_number,
+            rgb_frame_dir,
+            rgb_frames,
+            event_reader,
+            homography,
+            timings,
+            gray_channel=0,
+            dt_ms=10,
+            rgb_only=False,
+        ):
+            rgb_frame = cv.imread(os.path.join(rgb_frame_dir, rgb_frames[frame_number]))
+            warped_rgb_image = cv.warpPerspective(rgb_frame, homography, (1280, 720))
+            if rgb_only:
+                return warped_rgb_image
+            gray_warped_rgb_image = cv.cvtColor(warped_rgb_image, cv.COLOR_BGR2GRAY)
+            start_ts = int(np.floor(timings["t"][frame_number] / 1000))
+            events = event_reader.read(start_ts, start_ts + dt_ms)
+            if events.shape[0] >= 50000:
+                return cv.merge([gray_warped_rgb_image, gray_warped_rgb_image, gray_warped_rgb_image])
+
+            on_events = events[events["p"] == 1]
+            off_events = events[events["p"] == 0]
+            on_frame = np.zeros((720, 1280), dtype=np.uint8)
+            on_frame[on_events["y"], on_events["x"]] = 255
+            off_frame = np.zeros((720, 1280), dtype=np.uint8)
+            off_frame[off_events["y"], off_events["x"]] = 255
+            if gray_channel == 0:
+                final_image = cv.merge([gray_warped_rgb_image, on_frame, off_frame])
+            elif gray_channel == 1:
+                final_image = cv.merge([on_frame, gray_warped_rgb_image, off_frame])
+            elif gray_channel == 2:
+                final_image = cv.merge([on_frame, off_frame, gray_warped_rgb_image])
+            else:
+                merged_image = cv.merge([gray_warped_rgb_image, gray_warped_rgb_image, gray_warped_rgb_image])
+                merged_image[on_frame > 0] = [255, 0, 0]
+                merged_image[off_frame > 0] = [0, 0, 255]
+                final_image = merged_image
+
+            return final_image
+
+        def _init_bbox_from_labels(labels, init_frames_for_track_id, obj_id):
+            obj_specific_labels = labels[labels["track_id"] == obj_id - 1]
+            initial_frame = obj_specific_labels[obj_specific_labels["frame"] == init_frames_for_track_id[obj_id]]
+            x = int(np.clip(initial_frame["x"], 0, 1280))
+            y = int(np.clip(initial_frame["y"], 0, 720))
+            w = int(np.clip(initial_frame["w"], 0, 1280))
+            h = int(np.clip(initial_frame["h"], 0, 720))
+            return [x, y, w, h]
+
+        def _get_tracker_init_dictionaries(init_frames_for_track_id, labels):
+            init_bbox = OrderedDict()
+            init_object_ids = []
+            sequence_object_ids = []
+            lowest_frame_number = np.min(list(init_frames_for_track_id.values()))
+            for obj_id, value in init_frames_for_track_id.items():
+                # Only initialize objects that appear in the first frame
+                if value == lowest_frame_number:
+                    init_object_ids.append(obj_id)
+                    sequence_object_ids.append(obj_id)
+                    init_bbox[obj_id] = _init_bbox_from_labels(labels, init_frames_for_track_id, obj_id)
+
+            return init_bbox, init_object_ids, init_object_ids, sequence_object_ids
+
+        def _store_outputs(tracker_out: dict, defaults=None):
+            defaults = {} if defaults is None else defaults
+            for key in output.keys():
+                val = tracker_out.get(key, defaults.get(key, None))
+                if key in tracker_out or val is not None:
+                    output[key].append(val)
+
+        # Load necessary files
+        timings = np.genfromtxt(timings_file, delimiter=",", names=True)
+        rgb_frames = sorted(os.listdir(rgb_frame_dir))
+        event_reader = EventReader_HDF5(event_file)
+        homography = np.load(homography_file)
+        labels = np.load(label_file)
+
+        # Get initial frame numbers and indices for labels for each object
+        unique_track_ids = np.unique([label["track_id"] for label in labels])
+        init_frames_for_track_id = {}
+        inital_label_offset = 4
+        for track_id in unique_track_ids:
+            # Set key for dictionary to start with 1 instead of 0 as it is necessary for the tracker to work
+            init_frames_for_track_id[track_id + 1] = int(
+                labels[np.where(labels["track_id"] == track_id)]["frame"][0] + inital_label_offset
+            )
+
+        # Get the initial tensor for the first frame
+        initial_tensor = _create_tensor(
+            init_frames_for_track_id[1],
+            rgb_frame_dir,
+            rgb_frames,
+            event_reader,
+            homography,
+            timings,
+            3,
+            delta_t,
+            rgb_only,
+        )
+        init_bb, init_obj_ids, obj_ids, sequence_obj_ids = _get_tracker_init_dictionaries(
+            init_frames_for_track_id, labels
+        )
+
+        # Create init_info dictionary
+        init_info = {
+            "init_bbox": init_bb,
+            "init_object_ids": init_obj_ids,
+            "object_ids": obj_ids,
+            "sequence_object_ids": sequence_obj_ids,
+        }
+
+        if tracker.params.visualization and self.visdom is None:
+            self.visualize(initial_tensor, init_info.get("init_bbox"))
+
+        start_time = time.time()
+        out = tracker.initialize(initial_tensor, init_info)
+        if out is None:
+            out = {}
+
+        prev_output = OrderedDict(out)
+
+        init_default = {
+            "target_bbox": init_info.get("init_bbox"),
+            "clf_target_bbox": init_info.get("init_bbox"),
+            "time": time.time() - start_time,
+            "segmentation": init_info.get("init_mask"),
+            "object_presence_score": 1.0,
+        }
+
+        _store_outputs(out, init_default)
+
+        segmentation = out["segmentation"] if "segmentation" in out else None
+        bboxes = [init_default["target_bbox"]]
+        if "clf_target_bbox" in out:
+            bboxes.append(out["clf_target_bbox"])
+        if "clf_search_area" in out:
+            bboxes.append(out["clf_search_area"])
+        if "segm_search_area" in out:
+            bboxes.append(out["segm_search_area"])
+
+        if self.visdom is not None:
+            tracker.visdom_draw_tracking(initial_tensor, bboxes, segmentation)
+        elif tracker.params.visualization:
+            self.visualize(initial_tensor, bboxes, segmentation)
+
+        for frame_num, rgb_frame in enumerate(rgb_frames[1:], start=int(init_frames_for_track_id[1] + 1)):
+            while True:
+                if not self.pause_mode:
+                    break
+                elif self.step:
+                    self.step = False
+                    break
+                else:
+                    time.sleep(0.1)
+
+            tensor = _create_tensor(
+                frame_num, rgb_frame_dir, rgb_frames, event_reader, homography, timings, 3, delta_t, rgb_only
+            )
+
+            # TODO: Here
+            info = OrderedDict()
+            info["previous_output"] = prev_output
+            if len(unique_track_ids) > len(sequence_obj_ids):
+                for not_yet_init_ids in np.setdiff1d(unique_track_ids + 1, sequence_obj_ids):
+                    new_init_obj_ids = []
+                    new_init_bboxes = OrderedDict()
+                    if frame_num == init_frames_for_track_id.get(not_yet_init_ids):
+                        bbox = _init_bbox_from_labels(labels, init_frames_for_track_id, not_yet_init_ids)
+                        new_init_obj_ids.append(not_yet_init_ids)
+                        new_init_bboxes[not_yet_init_ids] = bbox
+                        sequence_obj_ids.append(not_yet_init_ids)
+
+                # If any new objects are to be tracked, initialize the tracker with the new objects
+                if len(new_init_obj_ids) > 0:
+                    info["init_object_ids"] = new_init_obj_ids
+                    info["init_bbox"] = new_init_bboxes
+
+            info["sequence_object_ids"] = sequence_obj_ids
+            start_time = time.time()
+            out = tracker.track(tensor, info)
+            prev_output = OrderedDict(out)
+            _store_outputs(out, {"time": time.time() - start_time})
+
+            segmentation = out["segmentation"] if "segmentation" in out else None
+
+            bboxes = [out["target_bbox"]]
+            if "clf_target_bbox" in out:
+                bboxes.append(out["clf_target_bbox"])
+            if "clf_search_area" in out:
+                bboxes.append(out["clf_search_area"])
+            if "segm_search_area" in out:
+                bboxes.append(out["segm_search_area"])
+
+            if self.visdom is not None:
+                tracker.visdom_draw_tracking(tensor, bboxes, segmentation)
+            elif tracker.params.visualization:
+                self.visualize(tensor, bboxes, segmentation)
+
+        for key in ["target_bbox", "segmentation"]:
+            if key in output and len(output[key]) <= 1:
+                output.pop(key)
+
+        # next two lines are needed for oxuva output format.
+        output["image_shape"] = (720, 1280)
         output["object_presence_score_threshold"] = tracker.params.get("object_presence_score_threshold", 0.55)
 
         return output
@@ -646,7 +925,15 @@ class Tracker:
         """
 
         def _create_tensor(
-            frame_number, rgb_frame_dir, event_reader, homography, timings, gray_channel=0, dt_ms=10, rgb_only=False
+            frame_number,
+            rgb_frame_dir,
+            rgb_frames,
+            event_reader,
+            homography,
+            timings,
+            gray_channel=0,
+            dt_ms=10,
+            rgb_only=False,
         ):
             rgb_frame = cv.imread(os.path.join(rgb_frame_dir, rgb_frames[frame_number]))
             warped_rgb_image = cv.warpPerspective(rgb_frame, homography, (1280, 720))
@@ -783,7 +1070,15 @@ class Tracker:
 
         # Get the initial tensor for the first frame
         initial_tensor = _create_tensor(
-            init_frames_for_track_id[1], rgb_frame_dir, event_reader, homography, timings, 3, delta_t, rgb_only
+            init_frames_for_track_id[1],
+            rgb_frame_dir,
+            rgb_frames,
+            event_reader,
+            homography,
+            timings,
+            3,
+            delta_t,
+            rgb_only,
         )
 
         # Set up dictionaries and lists for tracking
@@ -828,7 +1123,7 @@ class Tracker:
         while True:
             print(current_frame)
             tensor = _create_tensor(
-                current_frame, rgb_frame_dir, event_reader, homography, timings, 3, delta_t, rgb_only
+                current_frame, rgb_frame_dir, rgb_frames, event_reader, homography, timings, 3, delta_t, rgb_only
             )
             if tensor is None:
                 break
