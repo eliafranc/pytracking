@@ -61,10 +61,26 @@ class EvDroneDataset(BaseDataset):
 
     def _preprocess_annotations(self, annotations, start_frame, end_frame):
         annotations = annotations[annotations["frame"] >= start_frame]
-        # TODO: Watch out for multi object tracking ...
-        for i in range(start_frame, end_frame + 1):
+        # Make sure that the object_ids start from 1
+        annotations["track_id"] += 1
+
+        # new_annotations = []
+        # for object_id in np.unique(annotations["track_id"]):
+        #     object_annotations = annotations[annotations["track_id"] == object_id]
+        #     object_annotations = self._fill_missing_frames(object_annotations, object_id, end_frame)
+        #     new_annotations.append(object_annotations)
+        # new_annotations = np.concatenate(new_annotations)
+        return annotations
+
+    def _fill_missing_frames(self, annotations, object_id):
+        first_frame_for_object = annotations[0]["frame"]
+        last_frame_for_object = annotations[-1]["frame"]
+        for i in range(first_frame_for_object, last_frame_for_object + 1):
             if i not in annotations["frame"]:
-                annotations = np.append(annotations, np.array([(i, 0, 0, 1, 1)], dtype=annotations.dtype))
+                annotations = np.append(
+                    annotations, np.array([(i, object_id, 0, 0, 1, 1, 1, 1, 1)], dtype=annotations.dtype)
+                )
+        annotations = np.sort(annotations, order="frame")
         return annotations
 
     @staticmethod
@@ -342,4 +358,9 @@ class EvDroneDataset(BaseDataset):
             "2024_01_10_170911_recording_028",
             "2024_01_10_170911_recording_029",
         ]
+
+        # TODO: Createa new list where for each sequence, we check how many objects there are and then create a new sequence for each object
+        # instead of 2024_01_10_170509_himo_011 we then get 2024_01_10_170509_himo_011_1, 2024_01_10_170509_himo_011_2, etc.
+        # Assigning of gt etc according to object id can then be done in the _construct_sequence method
+
         return sequence_list
