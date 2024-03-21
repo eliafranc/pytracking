@@ -36,7 +36,9 @@ def run_tracker_on_tensor(
 
     visdom_info = {} if visdom_info is None else visdom_info
 
-    dataset = yaml.safe_load(open("experiments/ststephan_sequences.yaml"))
+    dataset = yaml.safe_load(open("experiments/ststephan_sequences.yaml"))['sequences']
+    print(dataset)
+    print(type(dataset))
 
     if sequence is not None:
         dataset = [sequence]
@@ -62,10 +64,13 @@ def main():
 
     args = parser.parse_args()
 
-    try:
-        seq_name = int(args.sequence)
-    except:
-        seq_name = args.sequence
+    if args.sequence is not None:
+        try:
+            seq_name = int(args.sequence)
+        except:
+            seq_name = args.sequence
+    else:
+        seq_name = None
 
     run_tracker_on_tensor(
         args.tracker_name,

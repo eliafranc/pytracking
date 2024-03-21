@@ -141,7 +141,7 @@ def extract_results(
         target_visible = torch.tensor(seq.target_visible, dtype=torch.uint8) if seq.target_visible is not None else None
         for trk_id, trk in enumerate(trackers):
             # Load results
-            base_results_path = "{}/{}/{}".format(trk.results_dir, report_name, seq.name)
+            base_results_path = "{}/{}".format(trk.results_dir, seq.name)
             results_path = "{}.txt".format(base_results_path)
 
             if os.path.isfile(results_path):

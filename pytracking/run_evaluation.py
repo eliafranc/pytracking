@@ -12,10 +12,12 @@ from pytracking.evaluation.datasets import get_dataset
 from pytracking.evaluation import Sequence, Tracker
 
 
+track_id_2_name = {1: 'rgb', 2: '5ms', 3: '10ms'}
+
 def run_evaluation(
     tracker_name,
     tracker_param,
-    input_type,
+    report_name,
     plot_type=("success"),
     dataset_name="evdrone",
     sequence_name=None,
@@ -33,24 +35,24 @@ def run_evaluation(
         print_results: Print results.
 
     """
-
-    trackers = [Tracker(tracker_name, tracker_param)]
+    
+    trackers = [Tracker(tracker_name, tracker_param, run_id, disp_name) for run_id, disp_name in track_id_2_name.items()]
     dataset = get_dataset(dataset_name)
 
     if sequence_name is not None:
         dataset = [dataset[sequence_name]]
 
-    plot_results(trackers, dataset, input_type, plot_types=plot_type)
+    plot_results(trackers, dataset, report_name, plot_types=plot_type)
 
     if print_result:
-        print_results(trackers, dataset, input_type, plot_types=plot_type)
+        print_results(trackers, dataset, report_name, plot_types=plot_type)
 
 
 def main():
     parser = argparse.ArgumentParser(description="Run tracker on sequence or dataset.")
     parser.add_argument("tracker_name", type=str, help="Name of tracking method.")
     parser.add_argument("tracker_param", type=str, help="Name of parameter file.")
-    parser.add_argument("input_type", type=str, help="Type of input (rgb, 10ms, 5ms etc.).")
+    parser.add_argument("report_name", type=str, help="Name for the output directory.")
     parser.add_argument(
         "--dataset",
         type=str,
@@ -71,7 +73,7 @@ def main():
     run_evaluation(
         args.tracker_name,
         args.tracker_param,
-        args.input_type,
+        args.report_name,
         args.plot_type,
         args.dataset,
         args.sequence,
