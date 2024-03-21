@@ -12,7 +12,15 @@ from pytracking.evaluation import Tracker
 
 
 def run_tracker_on_tensor(
-    tracker_name, tracker_param, delta_t=10, rgb_only=False, run_id=None, sequence=None, debug=0, threads=0, visdom_info=None
+    tracker_name,
+    tracker_param,
+    delta_t=10,
+    rgb_only=False,
+    run_id=None,
+    sequence=None,
+    debug=0,
+    threads=0,
+    visdom_info=None,
 ):
     """Run tracker on sequence or dataset.
     args:
@@ -43,7 +51,7 @@ def main():
     parser.add_argument("tracker_name", type=str, help="Name of tracking method.")
     parser.add_argument("tracker_param", type=str, help="Name of parameter file.")
     parser.add_argument("--delta_t", type=int, default=10, help="Time delta for events.")
-    parser.add_argument("--rgb_only", type=bool, default=False, help="Flag to use only RGB images.")
+    parser.add_argument("--rgb_only", action="store_true", help="Use only RGB frames")
     parser.add_argument("--runid", type=int, default=None, help="The run id.")
     parser.add_argument("--sequence", type=str, default=None, help="Sequence number or name.")
     parser.add_argument("--debug", type=int, default=0, help="Debug level.")

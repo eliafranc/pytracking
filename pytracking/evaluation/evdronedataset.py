@@ -1,10 +1,5 @@
-import os
-import json
 import numpy as np
 from pytracking.evaluation.data import Sequence, BaseDataset, SequenceList
-from pytracking.utils.load_text import load_text
-from PIL import Image
-from pathlib import Path
 
 DTYPE = np.dtype(
     [
@@ -37,66 +32,54 @@ class EvDroneDataset(BaseDataset):
         return SequenceList([self._construct_sequence(s) for s in self.sequence_list])
 
     def _construct_sequence(self, sequence_name):
-        class_name = sequence_name.split("-")[0]
-        anno_path = "{}/{}/labels_events_left.npy".format(self.base_path, sequence_name)
+        base_sequence = sequence_name[:-2]
+        object_id = int(sequence_name.split("_")[-1])
 
-        ground_truth = np.load(anno_path)
-        starting_frame = ground_truth[0]["frame"] + self.frame_offset
-        ending_frame = ground_truth[-1]["frame"]
-        ground_truth = ground_truth[ground_truth["frame"] >= starting_frame]
-        ground_truth_rect = self._preprocess_annotations(ground_truth, starting_frame, ending_frame)
+        anno_path = "{}/{}/labels_events_left.npy".format(self.base_path, base_sequence)
+        gt = np.load(anno_path)
+        object_specific_gt = gt[gt["track_id"] == object_id - 1]
+        starting_frame = int(object_specific_gt[0]["frame"] + self.frame_offset)
+        ending_frame = int(object_specific_gt[-1]["frame"])
+        object_specific_gt = object_specific_gt[object_specific_gt["frame"] >= starting_frame]
+        processed_gt = self._preprocess_annotations(object_specific_gt, starting_frame, ending_frame, base_sequence)
 
-        frames_path = "{}/{}/{}/frames".format(self.base_path, sequence_name)
+        frames_path = "{}/{}/frames".format(self.base_path, sequence_name)
 
         frames_list = [
             "{}/{:06d}.jpg".format(frames_path, frame_number)
-            for frame_number in range(1, ground_truth_rect.shape[0] + 1)
+            for frame_number in range(starting_frame, ending_frame + 1)
         ]
 
-        target_class = class_name
+        return Sequence(sequence_name, frames_list, "evdrone", processed_gt, object_class="drone")
 
-        return Sequence(
-            sequence_name, frames_list, "evdrone", ground_truth_rect.reshape(-1, 4), object_class=target_class
-        )
-
-    def _preprocess_annotations(self, annotations, start_frame, end_frame):
+    def _preprocess_annotations(self, annotations, start_frame, end_frame, seq):
         annotations = annotations[annotations["frame"] >= start_frame]
         # Make sure that the object_ids start from 1
         annotations["track_id"] += 1
 
-        # new_annotations = []
-        # for object_id in np.unique(annotations["track_id"]):
-        #     object_annotations = annotations[annotations["track_id"] == object_id]
-        #     object_annotations = self._fill_missing_frames(object_annotations, object_id, end_frame)
-        #     new_annotations.append(object_annotations)
-        # new_annotations = np.concatenate(new_annotations)
-        return annotations
-
-    def _fill_missing_frames(self, annotations, object_id):
-        first_frame_for_object = annotations[0]["frame"]
-        last_frame_for_object = annotations[-1]["frame"]
-        for i in range(first_frame_for_object, last_frame_for_object + 1):
-            if i not in annotations["frame"]:
-                annotations = np.append(
-                    annotations, np.array([(i, object_id, 0, 0, 1, 1, 1, 1, 1)], dtype=annotations.dtype)
+        new_annotations = []
+        for frame in range(start_frame, end_frame + 1):
+            if frame not in annotations["frame"]:
+                new_annotations.append([0, 0, 0, 0])
+                continue
+            else:
+                annotation = annotations[annotations["frame"] == frame]
+                assert len(annotation) == 1
+                new_annotations.append(
+                    [float(annotation["x"]), float(annotation["y"]), float(annotation["w"]), float(annotation["h"])]
                 )
-        annotations = np.sort(annotations, order="frame")
-        return annotations
+        new_annotations = np.array(new_annotations)
+        if new_annotations.shape == (0,):
+            print(seq)
 
-    @staticmethod
-    def _load_mask(path):
-        if not path.exists():
-            print("Error: Could not read: ", path, flush=True)
-            return None
-        im = np.array(Image.open(path))
-        im = np.atleast_3d(im)[..., 0]
-        return im
-
-    def _get_anno_frame_path(self, seq_path, frame_name):
-        return os.path.join(seq_path, frame_name)  # frames start from 1
+        return new_annotations
 
     def __len__(self):
         return len(self.sequence_list)
+    
+    def _get_invalid_sequences(self):
+        invalid_sequences = ["2024_01_10_163531_recording_016_3"]
+        return invalid_sequences
 
     def _get_sequence_list(self):
         sequence_list = [
@@ -362,5 +345,13 @@ class EvDroneDataset(BaseDataset):
         # TODO: Createa new list where for each sequence, we check how many objects there are and then create a new sequence for each object
         # instead of 2024_01_10_170509_himo_011 we then get 2024_01_10_170509_himo_011_1, 2024_01_10_170509_himo_011_2, etc.
         # Assigning of gt etc according to object id can then be done in the _construct_sequence method
+        new_sequence_list = []
+        for seq in sequence_list:
+            anno_path = "{}/{}/labels_events_left.npy".format(self.base_path, seq)
+            object_ids = np.unique(np.load(anno_path)["track_id"])
+            for object_id in object_ids + 1:
+                if f"{seq}_{object_id}" in self._get_invalid_sequences():
+                    continue
+                new_sequence_list.append(f"{seq}_{object_id}")
 
-        return sequence_list
+        return new_sequence_list

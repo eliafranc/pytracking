@@ -126,14 +126,17 @@ def _save_tracker_output(seq: Sequence, tracker: Tracker, output: dict):
                 imwrite_indexed(os.path.join(segmentation_path, "{}.png".format(frame_name)), frame_seg)
 
 
-def _save_tracker_tensor_output(seq: dict, tracker: Tracker, output: dict):
+def _save_tracker_tensor_output(seq: dict, input_type: str, tracker: Tracker, output: dict):
     """Saves the output of the tracker running on tensor data."""
 
     if not os.path.exists(tracker.results_dir):
         os.makedirs(tracker.results_dir)
 
-    base_results_path = os.path.join(tracker.results_dir, seq["sequence_name"])
-    segmentation_path = os.path.join(tracker.segmentation_dir, seq["sequence_name"])
+    if not os.path.exists(os.path.join(tracker.results_dir, input_type)):
+        os.makedirs(os.path.join(tracker.results_dir, input_type))
+
+    base_results_path = os.path.join(tracker.results_dir, input_type, seq["sequence_name"])
+    segmentation_path = os.path.join(tracker.segmentation_dir, input_type, seq["sequence_name"])
 
     labels = np.load(seq["label_file"])
     first_frame = int(labels[0]["frame"]) + 4
@@ -260,16 +263,24 @@ def run_tensor_sequence(
 ):
     """Runs a tracker on a sequence."""
 
-    def _results_exist(label_file):
+    def _results_exist(label_file, input_type):
         label_file = np.load(label_file)
         object_ids = np.unique(label_file["track_id"]) + 1
-        bbox_files = ["{}/{}_{}.txt".format(tracker.results_dir, seq["sequence_name"], obj_id) for obj_id in object_ids]
+        bbox_files = [
+            "{}/{}/{}_{}.txt".format(tracker.results_dir, input_type, seq["sequence_name"], obj_id)
+            for obj_id in object_ids
+        ]
         missing = [not os.path.isfile(f) for f in bbox_files]
         return sum(missing) == 0
 
     visdom_info = {} if visdom_info is None else visdom_info
 
-    if _results_exist(seq['label_file']) and not debug:
+    if rgb_only:
+        input_type = "rgb"
+    else:
+        input_type = str(delta_t) + "ms"
+
+    if _results_exist(seq["label_file"], input_type) and not debug:
         print("FPS: {}".format(-1))
         return
 
@@ -314,7 +325,7 @@ def run_tensor_sequence(
 
     if not debug:
         # TODO: Implement saving of results
-        _save_tracker_tensor_output(seq, tracker, output)
+        _save_tracker_tensor_output(seq, input_type, tracker, output)
 
 
 def run_dataset(dataset, trackers, debug=False, threads=0, visdom_info=None):
@@ -378,8 +389,8 @@ def run_tensor_dataset(dataset, trackers, delta_t=10, rgb_only=False, debug=Fals
                 run_tensor_sequence(
                     _build_sequence_dict(seq),
                     tracker_info,
-                    delta_t=10,
-                    rgb_only=False,
+                    delta_t,
+                    rgb_only,
                     debug=debug,
                     visdom_info=visdom_info,
                 )
