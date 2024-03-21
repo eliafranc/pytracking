@@ -13,13 +13,21 @@ from pytracking.evaluation import Sequence, Tracker
 
 
 def run_evaluation(
-    tracker_name, tracker_param, input_type, dataset_name="evdrone", sequence_name=None, print_result=False
+    tracker_name,
+    tracker_param,
+    input_type,
+    plot_type=("success"),
+    dataset_name="evdrone",
+    sequence_name=None,
+    print_result=False,
 ):
     """Run tracker on sequence or dataset.
     args:
         tracker_name: Name of tracking method.
         tracker_param: Name of parameter file.
         input_type: Type of input (rgb, 10ms, 5ms etc.).
+        plot_type: List of scores to display. Can contain 'success',
+                'prec' (precision), and 'norm_prec' (normalized precision).
         dataset_name: Name of dataset (otb, nfs, uav, tpl, vot, tn, gott, gotv, lasot).
         sequence_name: Sequence name. Can be set if only one sequence should be evaluated.
         print_results: Print results.
@@ -32,10 +40,10 @@ def run_evaluation(
     if sequence_name is not None:
         dataset = [dataset[sequence_name]]
 
-    plot_results(trackers, dataset, input_type)
+    plot_results(trackers, dataset, input_type, plot_types=plot_type)
 
     if print_result:
-        print_results(trackers, dataset, input_type)
+        print_results(trackers, dataset, input_type, plot_types=plot_type)
 
 
 def main():
@@ -49,13 +57,25 @@ def main():
         default="evdrone",
         help="Name of dataset (otb, nfs, uav, tpl, vot, tn, gott, gotv, lasot).",
     )
+    parser.add_argument(
+        "--plot_type",
+        nargs="*",
+        default=("success"),
+        help="List of scores to display. Can contain 'success', 'prec' (precision), and 'norm_prec' (normalized precision).",
+    )
     parser.add_argument("--sequence", type=str, default=None, help="Sequence name.")
     parser.add_argument("--print_results", action="store_true", help="Print results.")
 
     args = parser.parse_args()
 
     run_evaluation(
-        args.tracker_name, args.tracker_param, args.input_type, args.dataset, args.sequence, args.print_results
+        args.tracker_name,
+        args.tracker_param,
+        args.input_type,
+        args.plot_type,
+        args.dataset,
+        args.sequence,
+        args.print_results,
     )
 
 

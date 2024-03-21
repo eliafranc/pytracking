@@ -112,7 +112,6 @@ def extract_results(
 ):
     settings = env_settings()
     eps = 1e-16
-    print("inside")
 
     result_plot_path = os.path.join(settings.result_plot_path, report_name)
 

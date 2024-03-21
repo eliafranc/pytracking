@@ -108,6 +108,15 @@ def get_tracker_display_name(tracker):
 
 def plot_draw_save(y, x, scores, trackers, plot_draw_styles, result_plot_path, plot_opts):
     # Plot settings
+    def _tikzplotlib_fix_ncols(obj):
+        """
+        workaround for matplotlib 3.6 renamed legend's _ncol to _ncols, which breaks tikzplotlib
+        """
+        if hasattr(obj, "_ncols"):
+            obj._ncol = obj._ncols
+        for child in obj.get_children():
+            _tikzplotlib_fix_ncols(child)
+
     font_size = plot_opts.get('font_size', 12)
     font_size_axis = plot_opts.get('font_size_axis', 13)
     line_width = plot_opts.get('line_width', 2)
@@ -158,6 +167,8 @@ def plot_draw_save(y, x, scores, trackers, plot_draw_styles, result_plot_path, p
 
     ax.grid(True, linestyle='-.')
     fig.tight_layout()
+
+    _tikzplotlib_fix_ncols(ax)
 
     tikzplotlib.save('{}/{}_plot.tex'.format(result_plot_path, plot_type))
     fig.savefig('{}/{}_plot.pdf'.format(result_plot_path, plot_type), dpi=300, format='pdf', transparent=True)
