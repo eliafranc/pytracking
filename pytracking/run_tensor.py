@@ -90,12 +90,19 @@ def main():
         assert not args.rgb_only, "Time delta can only be changed when not using RGB frames."
 
     for sequence in [
-        "2024_01_10_113513_drone_25_001",
-        "2024_01_10_160626_back_drive_000",
-        "2024_01_10_162004_focus_000",
+        "2024_01_10_162004_focus_010",
+        "2024_01_10_162004_focus_011",
+        "2024_01_10_162004_focus_017",
+        "2024_01_10_162004_focus_018",
+        "2024_01_10_162004_focus_019",
+        "2024_01_10_162004_focus_020",
         "2024_01_10_162614_recording_000",
-        "2024_01_10_162614_recording_012",
-        "2024_01_10_163531_recording_010",
+        "2024_01_10_162614_recording_005",
+        "2024_01_10_162614_recording_013",
+        "2024_01_10_163531_recording_015",
+        "2024_01_10_165031_recording_000",
+        "2024_01_10_165031_recording_002",
+        "2024_01_10_165031_recording_012",
     ]:
         run_tensor(
             args.tracker_name,

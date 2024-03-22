@@ -24,6 +24,16 @@ DTYPE = dtype = np.dtype(
 )
 
 
+def _calculate_inverse_padding(padded_w, padded_h):
+    w = int(padded_w / (1 + 2 * 0.08))
+    h = int(padded_h / (1 + 2 * 0.1))
+    unpad_w = padded_w - w
+    unpad_h = padded_h - h
+    unpad_x = int(unpad_w / 2)
+    unpad_y = int(unpad_h / 2)
+    return {"x": unpad_x, "y": unpad_y, "w": unpad_w, "h": unpad_h}
+
+
 def fetch_gt_for_sequence(gt: np.ndarray, frame_offset: int, debug: int = 0) -> np.ndarray:
     """Fetch the ground truth for a sequence.
     args:
@@ -53,6 +63,13 @@ def fetch_gt_for_sequence(gt: np.ndarray, frame_offset: int, debug: int = 0) -> 
             print(f"Uncommon umber of filteredl labels: {pre_filter - post_filter} labels.")
     sorted_index = np.argsort(filtered_labels, order=["frame", "track_id"])
     filtered_labels_sorted = filtered_labels[sorted_index]
+
+    for i in range(len(filtered_labels_sorted)):
+        unpad = _calculate_inverse_padding(filtered_labels_sorted[i]["w"], filtered_labels_sorted[i]["h"])
+        filtered_labels_sorted[i]["x"] += unpad["x"]
+        filtered_labels_sorted[i]["y"] += unpad["y"]
+        filtered_labels_sorted[i]["w"] -= unpad["w"]
+        filtered_labels_sorted[i]["h"] -= unpad["h"]
 
     filtered_labels_sorted["track_id"] = filtered_labels_sorted["track_id"] + 1
 

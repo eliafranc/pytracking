@@ -69,14 +69,32 @@ class EvDroneDataset(BaseDataset):
                     [float(annotation["x"]), float(annotation["y"]), float(annotation["w"]), float(annotation["h"])]
                 )
         new_annotations = np.array(new_annotations)
-        if new_annotations.shape == (0,):
-            print(seq)
+        for i in range(len(new_annotations)):
+            new_annotations[i] = self._inverse_pad_annotation(new_annotations[i])
 
         return new_annotations
 
+    def _inverse_pad_annotation(self, annotation):
+        padded_x, padded_y, padded_w, padded_h = annotation
+        unpad = self._calculate_inverse_padding(padded_w, padded_h)
+        x = padded_x + unpad["x"]
+        y = padded_y + unpad["y"]
+        w = padded_w - unpad["w"]
+        h = padded_h - unpad["h"]
+        return np.asarray([x, y, w, h])
+
+    def _calculate_inverse_padding(self, padded_w, padded_h):
+        w = int(padded_w / (1 + 2 * 0.08))
+        h = int(padded_h / (1 + 2 * 0.1))
+        unpad_w = padded_w - w
+        unpad_h = padded_h - h
+        unpad_x = int(unpad_w / 2)
+        unpad_y = int(unpad_h / 2)
+        return {"x": unpad_x, "y": unpad_y, "w": unpad_w, "h": unpad_h}
+
     def __len__(self):
         return len(self.sequence_list)
-    
+
     def _get_invalid_sequences(self):
         invalid_sequences = ["2024_01_10_163531_recording_016_3"]
         invalid_sequences += ["2024_01_10_115957_mavic_003_1", "2024_01_10_115957_mavic_003_2"]

@@ -1188,15 +1188,15 @@ class Tracker:
                                 _tracker_disp_colors[obj_id],
                                 1,
                             )
-                            cv.putText(
-                                tensor,
-                                str(round(score, 3)),
-                                (bbox[0], bbox[1] - 7),
-                                cv.FONT_HERSHEY_SIMPLEX,
-                                0.4,
-                                _tracker_disp_colors[obj_id],
-                                1,
-                            )
+                            # cv.putText(
+                            #     tensor,
+                            #     str(round(score, 3)),
+                            #     (bbox[0], bbox[1] - 7),
+                            #     cv.FONT_HERSHEY_SIMPLEX,
+                            #     0.4,
+                            #     _tracker_disp_colors[obj_id],
+                            #     1,
+                            # )
 
                         cv.imwrite(f"{vis_output_dir}/{current_frame:06d}.jpg", tensor)
 

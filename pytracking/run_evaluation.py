@@ -13,7 +13,7 @@ from pytracking.evaluation import Sequence, Tracker
 
 
 # track_id_2_name = {1: 'rgb', 2: '5ms', 3: '10ms'}
-track_id_2_name = {1: "RGB", 2: "RGB + EV 5ms"}
+track_id_2_name = {1: "RGB", 2: "RGB + EV 5ms", 3: "RGB + EV 10ms"}
 
 
 def run_evaluation(
