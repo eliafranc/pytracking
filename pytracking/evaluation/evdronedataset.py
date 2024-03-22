@@ -79,6 +79,7 @@ class EvDroneDataset(BaseDataset):
     
     def _get_invalid_sequences(self):
         invalid_sequences = ["2024_01_10_163531_recording_016_3"]
+        invalid_sequences += ["2024_01_10_115957_mavic_003_1", "2024_01_10_115957_mavic_003_2"]
         return invalid_sequences
 
     def _get_sequence_list(self):

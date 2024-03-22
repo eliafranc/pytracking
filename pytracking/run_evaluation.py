@@ -12,7 +12,9 @@ from pytracking.evaluation.datasets import get_dataset
 from pytracking.evaluation import Sequence, Tracker
 
 
-track_id_2_name = {1: 'rgb', 2: '5ms', 3: '10ms'}
+# track_id_2_name = {1: 'rgb', 2: '5ms', 3: '10ms'}
+track_id_2_name = {1: "RGB", 2: "RGB + EV 5ms"}
+
 
 def run_evaluation(
     tracker_name,
@@ -22,6 +24,7 @@ def run_evaluation(
     dataset_name="evdrone",
     sequence_name=None,
     print_result=False,
+    empty_pred_zero=True,
 ):
     """Run tracker on sequence or dataset.
     args:
@@ -35,17 +38,19 @@ def run_evaluation(
         print_results: Print results.
 
     """
-    
-    trackers = [Tracker(tracker_name, tracker_param, run_id, disp_name) for run_id, disp_name in track_id_2_name.items()]
+
+    trackers = [
+        Tracker(tracker_name, tracker_param, run_id, disp_name) for run_id, disp_name in track_id_2_name.items()
+    ]
     dataset = get_dataset(dataset_name)
 
     if sequence_name is not None:
         dataset = [dataset[sequence_name]]
 
-    plot_results(trackers, dataset, report_name, plot_types=plot_type)
+    plot_results(trackers, dataset, report_name, plot_types=plot_type, skip_missing_seq=empty_pred_zero)
 
     if print_result:
-        print_results(trackers, dataset, report_name, plot_types=plot_type)
+        print_results(trackers, dataset, report_name, plot_types=plot_type, skip_missing_seq=empty_pred_zero)
 
 
 def main():
@@ -67,6 +72,7 @@ def main():
     )
     parser.add_argument("--sequence", type=str, default=None, help="Sequence name.")
     parser.add_argument("--print_results", action="store_true", help="Print results.")
+    parser.add_argument("--empty_pred_zero", action="store_true", help="Set empty prediction to zero.")
 
     args = parser.parse_args()
 
@@ -78,6 +84,7 @@ def main():
         args.dataset,
         args.sequence,
         args.print_results,
+        args.empty_pred_zero,
     )
 
 
