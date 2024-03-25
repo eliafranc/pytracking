@@ -361,7 +361,7 @@ class Tracker:
             gray_warped_rgb_image = cv.cvtColor(warped_rgb_image, cv.COLOR_BGR2GRAY)
             start_ts = int(np.floor(timings["t"][frame_number] / 1000))
             events = event_reader.read(start_ts, start_ts + dt_ms)
-            if events.shape[0] >= 50000:
+            if events.shape[0] >= 25000:
                 return cv.merge([gray_warped_rgb_image, gray_warped_rgb_image, gray_warped_rgb_image])
 
             on_events = events[events["p"] == 1]
@@ -1068,10 +1068,10 @@ class Tracker:
             init_frames_for_track_id[track_id + 1] = int(
                 labels[np.where(labels["track_id"] == track_id)]["frame"][0] + inital_label_offset
             )
-
+        print(min(init_frames_for_track_id.keys()))
         # Get the initial tensor for the first frame
         initial_tensor = _create_tensor(
-            init_frames_for_track_id[1],
+            init_frames_for_track_id[min(init_frames_for_track_id.keys())],
             rgb_frame_dir,
             rgb_frames,
             event_reader,
@@ -1102,11 +1102,11 @@ class Tracker:
 
         # Fill in the initial output dictionaries and visualize if set
         prev_output = OrderedDict(out)
-        output_boxes[init_frames_for_track_id[1]] = OrderedDict()
-        output_masks[init_frames_for_track_id[1]] = OrderedDict()
+        output_boxes[init_frames_for_track_id[min(init_frames_for_track_id.keys())]] = OrderedDict()
+        output_masks[init_frames_for_track_id[min(init_frames_for_track_id.keys())]] = OrderedDict()
         for obj_id, bbox in init_bb.items():
-            output_boxes[init_frames_for_track_id[1]][obj_id] = (bbox, 1)
-            output_masks[init_frames_for_track_id[1]][obj_id] = None
+            output_boxes[init_frames_for_track_id[min(init_frames_for_track_id.keys())]][obj_id] = (bbox, 1)
+            output_masks[init_frames_for_track_id[min(init_frames_for_track_id.keys())]][obj_id] = None
             if vis:
                 initial_tensor = cv.rectangle(
                     initial_tensor,
@@ -1115,11 +1115,14 @@ class Tracker:
                     _tracker_disp_colors[obj_id],
                     1,
                 )
-                cv.imwrite(f"{vis_output_dir}/{init_frames_for_track_id[1]:06d}.jpg", initial_tensor)
+                cv.imwrite(
+                    f"{vis_output_dir}/{init_frames_for_track_id[min(init_frames_for_track_id.keys())]:06d}.jpg",
+                    initial_tensor,
+                )
 
         # Set up variable regarding frame numbers
         last_frame = len(rgb_frames) - 1
-        current_frame = int(init_frames_for_track_id[1] + 1)
+        current_frame = int(init_frames_for_track_id[min(init_frames_for_track_id.keys())] + 1)
 
         while True:
             print(current_frame)
