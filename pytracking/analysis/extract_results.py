@@ -149,12 +149,12 @@ def extract_results(
                 pred_bb = torch.tensor(load_text(str(results_path), delimiter=("\t", ","), dtype=np.float64))
             else:
                 if skip_missing_seq:
-                    pred_bb = torch.zeros(anno_bb.shape, dtype=torch.float64)
                     lost_sequences[trk.display_name].append(seq.name)
-                    # valid_sequence[seq_id] = 0
+                    valid_sequence[seq_id] = 0
                     break
                 else:
-                    raise Exception("Result not found. {}".format(results_path))
+                    pred_bb = torch.zeros(anno_bb.shape, dtype=torch.float64)
+                    lost_sequences[trk.display_name].append(seq.name)
 
             # Calculate measures
             err_overlap, err_center, err_center_normalized, valid_frame = calc_seq_err_robust(
