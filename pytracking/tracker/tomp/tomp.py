@@ -209,7 +209,8 @@ class ToMP(BaseTracker):
             output_state = new_state.tolist()
 
         out = {'target_bbox': output_state,
-               'object_presence_score': score_map.max().cpu().item()}
+               'object_presence_score': score_map.max().cpu().item(),
+               'score': score_map.max().cpu().item()}
 
         if self.visdom is not None:
             self.visualize_raw_results(score_map)

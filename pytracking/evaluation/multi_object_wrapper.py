@@ -122,6 +122,7 @@ class MultiObjectWrapper:
             init_default = {'target_bbox': init_info_split[obj_id].get('init_bbox'),
                             'time': time.time() - start_time,
                             'segmentation': init_info_split[obj_id].get('init_mask'),
+                            "object_presence_score": 1.0,
                             'score': 1.0}
 
             out = self._set_defaults(out, init_default)
@@ -171,6 +172,7 @@ class MultiObjectWrapper:
                 init_default = {'target_bbox': init_info_split[obj_id].get('init_bbox'),
                                 'time': time.time() - start_time,
                                 'segmentation': init_info_split[obj_id].get('init_mask'),
+                                'object_presence_score': 1.0,
                                 'score': 1.0}
 
                 out = self._set_defaults(out, init_default)

@@ -13,7 +13,7 @@ from pytracking.evaluation import Sequence, Tracker
 
 
 # track_id_2_name = {1: 'rgb', 2: '5ms', 3: '10ms'}
-track_id_2_name = {1: "RGB", 2: "RGB + EV 5ms", 3: "RGB + EV 10ms"}
+track_id_2_name = {1: "RGB", 2: "RGB + EV 5ms", 3: "RGB + EV 10ms", 4: "RGB + EV 2ms"}
 
 
 def run_evaluation(
@@ -30,7 +30,7 @@ def run_evaluation(
     args:
         tracker_name: Name of tracking method.
         tracker_param: Name of parameter file.
-        input_type: Type of input (rgb, 10ms, 5ms etc.).
+        report_name: Name of the report that is being run.
         plot_type: List of scores to display. Can contain 'success',
                 'prec' (precision), and 'norm_prec' (normalized precision).
         dataset_name: Name of dataset (otb, nfs, uav, tpl, vot, tn, gott, gotv, lasot).

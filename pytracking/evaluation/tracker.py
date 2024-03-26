@@ -361,7 +361,7 @@ class Tracker:
             gray_warped_rgb_image = cv.cvtColor(warped_rgb_image, cv.COLOR_BGR2GRAY)
             start_ts = int(np.floor(timings["t"][frame_number] / 1000))
             events = event_reader.read(start_ts, start_ts + dt_ms)
-            if events.shape[0] >= 25000:
+            if events.shape[0] >= 50000:
                 return cv.merge([gray_warped_rgb_image, gray_warped_rgb_image, gray_warped_rgb_image])
 
             on_events = events[events["p"] == 1]
