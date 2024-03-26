@@ -424,7 +424,7 @@ class Tracker:
         # Get initial frame numbers and indices for labels for each object
         unique_track_ids = np.unique([label["track_id"] for label in labels])
         init_frames_for_track_id = {}
-        inital_label_offset = 4
+        inital_label_offset = 2
         for track_id in unique_track_ids:
             # Set key for dictionary to start with 1 instead of 0 as it is necessary for the tracker to work
             init_frames_for_track_id[track_id + 1] = int(
@@ -511,16 +511,17 @@ class Tracker:
                 for not_yet_init_ids in np.setdiff1d(unique_track_ids + 1, sequence_obj_ids):
                     new_init_obj_ids = []
                     new_init_bboxes = OrderedDict()
-                    if frame_num == init_frames_for_track_id.get(not_yet_init_ids):
+                    if frame_num >= init_frames_for_track_id[not_yet_init_ids]:
+                        init_frames_for_track_id[not_yet_init_ids] = frame_num
                         bbox = _init_bbox_from_labels(labels, init_frames_for_track_id, not_yet_init_ids)
                         new_init_obj_ids.append(not_yet_init_ids)
                         new_init_bboxes[not_yet_init_ids] = bbox
-                        sequence_obj_ids.append(not_yet_init_ids)
 
                 # If any new objects are to be tracked, initialize the tracker with the new objects
                 if len(new_init_obj_ids) > 0:
                     info["init_object_ids"] = new_init_obj_ids
                     info["init_bbox"] = new_init_bboxes
+                    sequence_obj_ids.extend(new_init_obj_ids)
 
             info["sequence_object_ids"] = sequence_obj_ids
             start_time = time.time()
@@ -548,7 +549,7 @@ class Tracker:
                 output.pop(key)
 
         # next two lines are needed for oxuva output format.
-        output["image_shape"] = (720, 1280)
+        output["image_shape"] = tensor.shape[:2]
         output["object_presence_score_threshold"] = tracker.params.get("object_presence_score_threshold", 0.55)
 
         return output
@@ -643,7 +644,6 @@ class Tracker:
         if optional_box is not None:
             assert isinstance(optional_box, (list, tuple))
             assert len(optional_box) == 4, "valid box's format is [x,y,w,h]"
-            print("Should not print.")
 
             out = tracker.initialize(
                 frame,
@@ -1068,7 +1068,7 @@ class Tracker:
             init_frames_for_track_id[track_id + 1] = int(
                 labels[np.where(labels["track_id"] == track_id)]["frame"][0] + inital_label_offset
             )
-        print(min(init_frames_for_track_id.keys()))
+
         # Get the initial tensor for the first frame
         initial_tensor = _create_tensor(
             init_frames_for_track_id[min(init_frames_for_track_id.keys())],
@@ -1160,7 +1160,6 @@ class Tracker:
 
             if len(sequence_obj_ids) > 0:
                 info["sequence_object_ids"] = sequence_obj_ids
-                print(sequence_obj_ids)
 
                 # Track objects that are present in the current frame
                 out = tracker.track(tensor, info)

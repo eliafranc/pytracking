@@ -10,6 +10,13 @@ if env_path not in sys.path:
 from pytracking.evaluation.running import run_tensor_dataset
 from pytracking.evaluation import Tracker
 
+run_arguments = {
+    1: {"rgb_only": True, "delta_t": 10},
+    2: {"rgb_only": False, "delta_t": 2},
+    3: {"rgb_only": False, "delta_t": 5},
+    4: {"rgb_only": False, "delta_t": 10},
+}
+
 
 def run_tracker_on_tensor(
     tracker_name,
@@ -36,9 +43,7 @@ def run_tracker_on_tensor(
 
     visdom_info = {} if visdom_info is None else visdom_info
 
-    dataset = yaml.safe_load(open("experiments/ststephan_sequences.yaml"))['sequences']
-    print(dataset)
-    print(type(dataset))
+    dataset = yaml.safe_load(open("experiments/ststephan_sequences.yaml"))["sequences"]
 
     if sequence is not None:
         dataset = [sequence]
@@ -72,17 +77,18 @@ def main():
     else:
         seq_name = None
 
-    run_tracker_on_tensor(
-        args.tracker_name,
-        args.tracker_param,
-        args.delta_t,
-        args.rgb_only,
-        args.runid,
-        seq_name,
-        args.debug,
-        args.threads,
-        {"use_visdom": args.use_visdom, "server": args.visdom_server, "port": args.visdom_port},
-    )
+    for run_id, run_args in run_arguments.items():
+        run_tracker_on_tensor(
+            args.tracker_name,
+            args.tracker_param,
+            run_args["delta_t"],
+            run_args["rgb_only"],
+            run_id,
+            seq_name,
+            args.debug,
+            args.threads,
+            {"use_visdom": args.use_visdom, "server": args.visdom_server, "port": args.visdom_port},
+        )
 
 
 if __name__ == "__main__":

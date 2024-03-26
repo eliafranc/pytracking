@@ -10,7 +10,7 @@ def parameters():
     ##########################################
 
     params.debug = 0
-    params.visualization = False
+    params.visualization = True
     params.multiobj_mode = 'parallel'
     params.use_gpu = True
 

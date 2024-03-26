@@ -136,7 +136,7 @@ def _save_tracker_tensor_output(seq: dict, tracker: Tracker, output: dict):
     segmentation_path = os.path.join(tracker.segmentation_dir, seq["sequence_name"])
 
     labels = np.load(seq["label_file"])
-    first_frame = int(labels[0]["frame"]) + 4
+    first_frame = int(labels[0]["frame"]) + 2
 
     frames = sorted(os.listdir(seq["rgb_frame_dir"]))[first_frame:]
     frame_names = [os.path.splitext(os.path.basename(f))[0] for f in frames]
@@ -261,10 +261,7 @@ def run_tensor_sequence(
     def _results_exist(label_file):
         label_file = np.load(label_file)
         object_ids = np.unique(label_file["track_id"]) + 1
-        bbox_files = [
-            "{}/{}_{}.txt".format(tracker.results_dir, seq["sequence_name"], obj_id)
-            for obj_id in object_ids
-        ]
+        bbox_files = ["{}/{}_{}.txt".format(tracker.results_dir, seq["sequence_name"], obj_id) for obj_id in object_ids]
         missing = [not os.path.isfile(f) for f in bbox_files]
         return sum(missing) == 0
 
@@ -279,7 +276,6 @@ def run_tensor_sequence(
             tracker.name, tracker.parameter_name, tracker.run_id, seq["sequence_name"]
         )
     )
-    print(debug)
 
     if debug:
         output = tracker.run_tensor_sequence(
