@@ -136,7 +136,7 @@ def _save_tracker_tensor_output(seq: dict, tracker: Tracker, output: dict):
     segmentation_path = os.path.join(tracker.segmentation_dir, seq["sequence_name"])
 
     labels = np.load(seq["label_file"])
-    first_frame = int(labels[0]["frame"]) + 2
+    first_frame = int(labels[0]["frame"]) + 4
 
     frames = sorted(os.listdir(seq["rgb_frame_dir"]))[first_frame:]
     frame_names = [os.path.splitext(os.path.basename(f))[0] for f in frames]

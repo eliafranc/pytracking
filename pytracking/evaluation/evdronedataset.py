@@ -43,7 +43,7 @@ class EvDroneDataset(BaseDataset):
         object_specific_gt = object_specific_gt[object_specific_gt["frame"] >= starting_frame]
         processed_gt = self._preprocess_annotations(object_specific_gt, starting_frame, ending_frame, base_sequence)
 
-        frames_path = "{}/{}/frames".format(self.base_path, sequence_name)
+        frames_path = "{}/{}/frames".format(self.base_path, sequence_name[:-2])
 
         frames_list = [
             "{}/{:06d}.jpg".format(frames_path, frame_number)

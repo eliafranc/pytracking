@@ -10,11 +10,14 @@ if env_path not in sys.path:
 from pytracking.evaluation.running import run_tensor_dataset
 from pytracking.evaluation import Tracker
 
+
 run_arguments = {
     1: {"rgb_only": True, "delta_t": 10},
     2: {"rgb_only": False, "delta_t": 2},
     3: {"rgb_only": False, "delta_t": 5},
     4: {"rgb_only": False, "delta_t": 10},
+    5: {"rgb_only": False, "delta_t": 15},
+    6: {"rgb_only": False, "delta_t": 20},
 }
 
 

@@ -361,7 +361,9 @@ class Tracker:
             gray_warped_rgb_image = cv.cvtColor(warped_rgb_image, cv.COLOR_BGR2GRAY)
             start_ts = int(np.floor(timings["t"][frame_number] / 1000))
             events = event_reader.read(start_ts, start_ts + dt_ms)
-            if events.shape[0] >= 25000:
+            # TODO: make threshold dependent on dt_ms -> 25000 for 2.5ms = 10000 e/ms = 10 Me/s (10^7 e/s)
+            ev_threshhold = 7500000 * (dt_ms / 1000)
+            if events.shape[0] >= ev_threshhold:
                 return cv.merge([gray_warped_rgb_image, gray_warped_rgb_image, gray_warped_rgb_image])
 
             on_events = events[events["p"] == 1]
@@ -424,7 +426,7 @@ class Tracker:
         # Get initial frame numbers and indices for labels for each object
         unique_track_ids = np.unique([label["track_id"] for label in labels])
         init_frames_for_track_id = {}
-        inital_label_offset = 2
+        inital_label_offset = 4
         for track_id in unique_track_ids:
             # Set key for dictionary to start with 1 instead of 0 as it is necessary for the tracker to work
             init_frames_for_track_id[track_id + 1] = int(
