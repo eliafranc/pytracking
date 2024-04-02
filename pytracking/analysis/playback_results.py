@@ -4,14 +4,19 @@ import importlib
 import numpy as np
 import torch
 import time
+import matplotlib
+
+matplotlib.use("TkAgg")
 import matplotlib.patches as patches
 import cv2 as cv
 import matplotlib.pyplot as plt
 from pytracking.analysis.plot_results import get_plot_draw_styles
 from pytracking.utils.plotting import draw_figure
 from pytracking.evaluation import get_dataset, trackerlist
+from evutils.io.reader import EventReader_HDF5
 
-env_path = os.path.join(os.path.dirname(__file__), '../..')
+
+env_path = os.path.join(os.path.dirname(__file__), "../..")
 if env_path not in sys.path:
     sys.path.append(env_path)
 
@@ -22,9 +27,9 @@ class Display:
         self.frame_number = 0
         self.pause_mode = True
         self.step_size = 0
-        self.step_direction = 'forward'
+        self.step_direction = "forward"
         self.fig, self.ax = plt.subplots(1)
-        self.fig.canvas.mpl_connect('key_press_event', self.key_callback_fn)
+        self.fig.canvas.mpl_connect("key_press_event", self.key_callback_fn)
         plt.tight_layout()
 
         self.sequence_length = sequence_length
@@ -32,44 +37,44 @@ class Display:
         self.plot_draw_styles = plot_draw_styles
 
     def key_callback_fn(self, event):
-        if event.key == ' ':
+        if event.key == " ":
             self.pause_mode = not self.pause_mode
             self.step_size = 0
-            self.step_direction = 'forward'
-        elif event.key == 'right':
+            self.step_direction = "forward"
+        elif event.key == "right":
             if self.pause_mode:
                 self.frame_number += 1
 
                 if self.frame_number >= self.sequence_length:
                     self.frame_number = self.sequence_length - 1
-            elif self.step_direction == 'stop':
-                self.step_direction = 'forward'
+            elif self.step_direction == "stop":
+                self.step_direction = "forward"
                 self.step_size = 0
-            elif self.step_direction == 'backward' and self.step_size == 0:
-                self.step_direction = 'stop'
+            elif self.step_direction == "backward" and self.step_size == 0:
+                self.step_direction = "stop"
             else:
                 self.step_size += 1
-        elif event.key == 'left':
+        elif event.key == "left":
             if self.pause_mode:
                 self.frame_number -= 1
 
                 if self.frame_number < 0:
                     self.frame_number = 0
-            elif self.step_direction == 'stop':
-                self.step_direction = 'backward'
+            elif self.step_direction == "stop":
+                self.step_direction = "backward"
                 self.step_size = 0
-            elif self.step_direction == 'forward' and self.step_size == 0:
-                self.step_direction = 'stop'
+            elif self.step_direction == "forward" and self.step_size == 0:
+                self.step_direction = "stop"
             else:
                 self.step_size -= 1
-        elif event.key == 'escape' or event.key == 'q':
+        elif event.key == "escape" or event.key == "q":
             self.active = False
 
     def _get_speed(self):
         delta = 0
-        if self.step_direction == 'forward':
+        if self.step_direction == "forward":
             delta = 2 ** abs(self.step_size)
-        elif self.step_direction == 'backward':
+        elif self.step_direction == "backward":
             delta = -1 * 2 ** abs(self.step_size)
 
         return delta
@@ -90,42 +95,51 @@ class Display:
         # Draw rects
         rect_handles = []
         for i, bb in enumerate(bb_list):
-            rect = patches.Rectangle((bb[0], bb[1]), bb[2], bb[3], linewidth=1,
-                                     edgecolor=self.plot_draw_styles[i]['color'], facecolor='none')
+            rect = patches.Rectangle(
+                (bb[0], bb[1]), bb[2], bb[3], linewidth=1, edgecolor=self.plot_draw_styles[i]["color"], facecolor="none"
+            )
             self.ax.add_patch(rect)
 
-            rect_handles.append(patches.Rectangle((bb[0], bb[1]), bb[2], bb[3], linewidth=1,
-                                     edgecolor=self.plot_draw_styles[i]['color'],
-                                                  facecolor=self.plot_draw_styles[i]['color'],
-                                                  label=trackers[i]))
+            rect_handles.append(
+                patches.Rectangle(
+                    (bb[0], bb[1]),
+                    bb[2],
+                    bb[3],
+                    linewidth=1,
+                    edgecolor=self.plot_draw_styles[i]["color"],
+                    facecolor=self.plot_draw_styles[i]["color"],
+                    label=trackers[i],
+                )
+            )
 
         if gt is not None:
-            rect = patches.Rectangle((gt[0], gt[1]), gt[2], gt[3], linewidth=2, edgecolor='g',
-                                     facecolor='none')
+            rect = patches.Rectangle((gt[0], gt[1]), gt[2], gt[3], linewidth=2, edgecolor="g", facecolor="none")
             self.ax.add_patch(rect)
             rect_handles.append(rect)
 
         self.ax.set_axis_off()
-        self.ax.axis('equal')
-        plt.legend(handles=rect_handles, loc=4, borderaxespad=0.)
-        mode = 'manual' if self.pause_mode else 'auto     '
+        self.ax.axis("equal")
+        plt.legend(handles=rect_handles, loc=4, borderaxespad=0.0)
+        mode = "manual" if self.pause_mode else "auto     "
         speed = self._get_speed()
-        self.fig.suptitle('Sequence: {}    Mode: {}    Speed: {:d}x'.format(self.sequence_name, mode, speed),
-                          fontsize=14)
+        self.fig.suptitle(
+            "Sequence: {}    Mode: {}    Speed: {:d}x".format(self.sequence_name, mode, speed), fontsize=14
+        )
         draw_figure(self.fig)
 
 
-def read_image(image_file: str):
+def read_image(image_file: str, h):
     im = cv.imread(image_file)
+    im = cv.warpPerspective(im, h, (1280, 720))
     return cv.cvtColor(im, cv.COLOR_BGR2RGB)
 
 
 def _get_display_name(tracker):
     if tracker.display_name is None:
         if tracker.run_id is not None:
-            return '{}_{}_{:03d}'.format(tracker.name, tracker.parameter_name, tracker.run_id)
+            return "{}_{}_{:03d}".format(tracker.name, tracker.parameter_name, tracker.run_id)
         else:
-            return '{}_{}'.format(tracker.name, tracker.parameter_name)
+            return "{}_{}".format(tracker.name, tracker.parameter_name)
     else:
         return tracker.display_name
 
@@ -143,34 +157,57 @@ def playback_results(trackers, sequence):
     # Load results
     for trk_id, trk in enumerate(trackers):
         # Load results
-        base_results_path = '{}/{}'.format(trk.results_dir, sequence.name)
-        results_path = '{}.txt'.format(base_results_path)
+        base_results_path = "{}/{}".format(trk.results_dir, sequence.name)
+        results_path = "{}.txt".format(base_results_path)
 
         if os.path.isfile(results_path):
             try:
                 pred_bb = torch.tensor(np.loadtxt(str(results_path), dtype=np.float64))
             except:
-                pred_bb = torch.tensor(np.loadtxt(str(results_path), delimiter=',', dtype=np.float64))
+                pred_bb = torch.tensor(np.loadtxt(str(results_path), delimiter=",", dtype=np.float64))
         else:
-            raise Exception('Result not found. {}'.format(results_path))
+            raise Exception("Result not found. {}".format(results_path))
 
         tracker_results.append(pred_bb)
 
     # Convert to list of shape seq_length * num_trackers * 4
+    base_path = '/datasets/armasuisse/StStephan/drone'
+    tracker_results.append(torch.tensor(sequence.ground_truth_rect))
     tracker_results = torch.stack(tracker_results, dim=1).tolist()
     tracker_names = [_get_display_name(t) for t in trackers]
+    tracker_names.append('GT')
 
     display = Display(len(tracker_results), plot_draw_styles, sequence.name)
+    h = np.load(os.path.join(base_path, sequence.name[:-2], 'Projection_rgb_to_events_left.npy'))
+    timings = np.genfromtxt(os.path.join(base_path, sequence.name[:-2], 'frames_ts.csv'), delimiter=",", names=True)
+    init_frame = sequence.frames[0].split("/")[-1][:-4].lstrip("0")
+    timings = timings[int(init_frame):]
+    event_reader = EventReader_HDF5(os.path.join(base_path, sequence.name[:-2], 'events_left_final.h5'))
 
     while display.active:
         frame_number = display.frame_number
-        image = read_image(sequence.frames[frame_number])
+        print(frame_number)
+        start_ts = int(np.floor(timings["t"][frame_number] / 1000))
+        events = event_reader.read(start_ts, start_ts + 3)
 
-        display.show(image, tracker_results[frame_number], tracker_names)
+        image = read_image(sequence.frames[frame_number], h)
+        gray_warped_rgb_image = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+
+        on_events = events[events["p"] == 1]
+        off_events = events[events["p"] == 0]
+        on_frame = np.zeros((720, 1280), dtype=np.uint8)
+        on_frame[on_events["y"], on_events["x"]] = 255
+        off_frame = np.zeros((720, 1280), dtype=np.uint8)
+        off_frame[off_events["y"], off_events["x"]] = 255
+        merged_image = cv.merge([gray_warped_rgb_image, gray_warped_rgb_image, gray_warped_rgb_image])
+        merged_image[on_frame > 0] = [255, 0, 0]
+        merged_image[off_frame > 0] = [0, 0, 255]
+        final_image = merged_image
+
+        display.show(final_image, tracker_results[frame_number], tracker_names)
 
         time.sleep(0.01)
         if display.pause_mode and display.frame_number == frame_number:
             time.sleep(0.1)
         elif not display.pause_mode:
             display.step()
-

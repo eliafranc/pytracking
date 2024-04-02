@@ -187,11 +187,17 @@ def extract_results(
                 valid_sequence.long().sum().item(), valid_sequence.shape[0]
             )
         )
-        print(
-            "Lost sequences (rgb, 5ms, 10ms): {}, {}, {}".format(
-                len(lost_sequences["RGB"]), len(lost_sequences["RGB + EV 5ms"]), len(lost_sequences["RGB + EV 10ms"])
-            )
-        )
+        # print(
+        #     "Lost sequences (rgb, 2ms, 5ms, 10ms, 15ms, 20ms): {}, {}, {}, {}, {}, {}".format(
+        #         len(lost_sequences["RGB"]),
+        #         len(lost_sequences["RGB + EV 2ms"]),
+        #         len(lost_sequences["RGB + EV 5ms"]),
+        #         len(lost_sequences["RGB + EV 10ms"]),
+        #         len(lost_sequences["RGB + EV 15ms"]),
+        #         len(lost_sequences["RGB + EV 20ms"]),
+        #     )
+        # )
+        print(lost_sequences)
 
     # Prepare dictionary for saving data
     seq_names = [s.name for s in dataset]

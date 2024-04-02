@@ -496,6 +496,7 @@ def print_per_sequence_results(trackers, dataset, report_name, merge_results=Fal
     tracker_disp_names = [get_tracker_display_name(trk) for trk in tracker_names]
 
     scores_per_tracker = {k: avg_overlap_all[:, i] for i, k in enumerate(tracker_disp_names)}
+    print(scores_per_tracker)
     report_text = generate_formatted_report(sequence_names, scores_per_tracker)
 
     print(report_text)
