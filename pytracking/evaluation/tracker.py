@@ -362,7 +362,7 @@ class Tracker:
             start_ts = int(np.floor(timings["t"][frame_number] / 1000))
             events = event_reader.read(start_ts, start_ts + dt_ms)
             # TODO: make threshold dependent on dt_ms -> 25000 for 2.5ms = 10000 e/ms = 10 Me/s (10^7 e/s)
-            ev_threshhold = 7500000 * (dt_ms / 1000)
+            ev_threshhold = 10000000 * (dt_ms / 1000)
             if events.shape[0] >= ev_threshhold:
                 return cv.merge([gray_warped_rgb_image, gray_warped_rgb_image, gray_warped_rgb_image])
 
@@ -389,6 +389,8 @@ class Tracker:
         def _init_bbox_from_labels(labels, init_frames_for_track_id, obj_id):
             obj_specific_labels = labels[labels["track_id"] == obj_id - 1]
             initial_frame = obj_specific_labels[obj_specific_labels["frame"] == init_frames_for_track_id[obj_id]]
+            if initial_frame.size == 0:
+                return None
             x = int(np.clip(initial_frame["x"], 0, 1280))
             y = int(np.clip(initial_frame["y"], 0, 720))
             w = int(np.clip(initial_frame["w"], 0, 1280))
@@ -510,14 +512,17 @@ class Tracker:
             info = OrderedDict()
             info["previous_output"] = prev_output
             if len(unique_track_ids) > len(sequence_obj_ids):
+                new_init_obj_ids = []
+                new_init_bboxes = OrderedDict()
                 for not_yet_init_ids in np.setdiff1d(unique_track_ids + 1, sequence_obj_ids):
-                    new_init_obj_ids = []
-                    new_init_bboxes = OrderedDict()
-                    if frame_num >= init_frames_for_track_id[not_yet_init_ids]:
-                        init_frames_for_track_id[not_yet_init_ids] = frame_num
+                    if frame_num == init_frames_for_track_id[not_yet_init_ids]:
+                        # init_frames_for_track_id[not_yet_init_ids] = frame_num
                         bbox = _init_bbox_from_labels(labels, init_frames_for_track_id, not_yet_init_ids)
-                        new_init_obj_ids.append(not_yet_init_ids)
-                        new_init_bboxes[not_yet_init_ids] = bbox
+                        if bbox is not None:
+                            new_init_obj_ids.append(not_yet_init_ids)
+                            new_init_bboxes[not_yet_init_ids] = bbox
+                        else:
+                            init_frames_for_track_id[not_yet_init_ids] = frame_num - 1
 
                 # If any new objects are to be tracked, initialize the tracker with the new objects
                 if len(new_init_obj_ids) > 0:
@@ -548,6 +553,7 @@ class Tracker:
 
         for key in ["target_bbox", "segmentation"]:
             if key in output and len(output[key]) <= 1:
+                print(key)
                 output.pop(key)
 
         # next two lines are needed for oxuva output format.
