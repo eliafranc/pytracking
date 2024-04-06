@@ -363,7 +363,7 @@ class Tracker:
             events = event_reader.read(start_ts, start_ts + dt_ms)
             # TODO: make threshold dependent on dt_ms -> 25000 for 2.5ms = 10000 e/ms = 10 Me/s (10^7 e/s)
             ev_threshhold = 7500000 * (dt_ms / 1000)
-            if events.shape[0] >= ev_threshhold:
+            if events.shape[0] >= ev_threshhold or events.size == 0:
                 return cv.merge([gray_warped_rgb_image, gray_warped_rgb_image, gray_warped_rgb_image])
 
             on_events = events[events["p"] == 1]
