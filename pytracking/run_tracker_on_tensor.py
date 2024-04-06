@@ -13,11 +13,12 @@ from pytracking.evaluation import Tracker
 
 run_arguments = {
     1: {"rgb_only": True, "delta_t": 10},
-    2: {"rgb_only": False, "delta_t": 2},
-    3: {"rgb_only": False, "delta_t": 5},
-    4: {"rgb_only": False, "delta_t": 10},
-    5: {"rgb_only": False, "delta_t": 15},
-    6: {"rgb_only": False, "delta_t": 20},
+    2: {"rgb_only": False, "delta_t": 1},
+    3: {"rgb_only": False, "delta_t": 2},
+    4: {"rgb_only": False, "delta_t": 5},
+    5: {"rgb_only": False, "delta_t": 10},
+    6: {"rgb_only": False, "delta_t": 15},
+    7: {"rgb_only": False, "delta_t": 20},
 }
 
 

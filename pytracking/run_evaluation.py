@@ -16,11 +16,12 @@ from pytracking.evaluation import Sequence, Tracker
 # track_id_2_name = {1: "RGB", 2: "RGB + EV 5ms", 3: "RGB + EV 10ms", 4: "RGB + EV 2ms"}
 track_id_2_name = {
     1: "RGB",
-    2: "RGB + EV 2ms",
-    3: "RGB + EV 5ms",
-    4: "RGB + EV 10ms",
-    5: "RGB + EV 15ms",
-    6: "RGB + EV 20ms",
+    2: "RGB + EV 1ms",
+    3: "RGB + EV 2ms",
+    4: "RGB + EV 5ms",
+    5: "RGB + EV 10ms",
+    6: "RGB + EV 15ms",
+    7: "RGB + EV 20ms",
 }
 
 
