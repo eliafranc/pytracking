@@ -362,7 +362,7 @@ class Tracker:
             start_ts = int(np.floor(timings["t"][frame_number] / 1000))
             events = event_reader.read(start_ts, start_ts + dt_ms)
             # TODO: make threshold dependent on dt_ms -> 25000 for 2.5ms = 10000 e/ms = 10 Me/s (10^7 e/s)
-            ev_threshhold = 10000000 * (dt_ms / 1000)
+            ev_threshhold = 7500000 * (dt_ms / 1000)
             if events.shape[0] >= ev_threshhold:
                 return cv.merge([gray_warped_rgb_image, gray_warped_rgb_image, gray_warped_rgb_image])
 
@@ -424,9 +424,11 @@ class Tracker:
         event_reader = EventReader_HDF5(event_file)
         homography = np.load(homography_file)
         labels = np.load(label_file)
+        labels['track_id'] = labels['track_id'] - min(labels['track_id'])
 
         # Get initial frame numbers and indices for labels for each object
         unique_track_ids = np.unique([label["track_id"] for label in labels])
+        print(unique_track_ids)
         init_frames_for_track_id = {}
         inital_label_offset = 4
         for track_id in unique_track_ids:
