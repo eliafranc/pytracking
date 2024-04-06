@@ -37,6 +37,7 @@ class EvDroneDataset(BaseDataset):
 
         anno_path = "{}/{}/labels_events_left.npy".format(self.base_path, base_sequence)
         gt = np.load(anno_path)
+        gt['track_id'] = gt['track_id'] - min(gt['track_id'])
         object_specific_gt = gt[gt["track_id"] == object_id - 1]
         starting_frame = int(object_specific_gt[0]["frame"] + self.frame_offset)
         ending_frame = int(object_specific_gt[-1]["frame"])
@@ -368,6 +369,7 @@ class EvDroneDataset(BaseDataset):
         for seq in sequence_list:
             anno_path = "{}/{}/labels_events_left.npy".format(self.base_path, seq)
             object_ids = np.unique(np.load(anno_path)["track_id"])
+            object_ids = object_ids - min(object_ids)
             for object_id in object_ids + 1:
                 if f"{seq}_{object_id}" in self._get_invalid_sequences():
                     continue

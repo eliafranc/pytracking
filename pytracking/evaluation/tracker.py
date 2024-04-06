@@ -428,7 +428,6 @@ class Tracker:
 
         # Get initial frame numbers and indices for labels for each object
         unique_track_ids = np.unique([label["track_id"] for label in labels])
-        print(unique_track_ids)
         init_frames_for_track_id = {}
         inital_label_offset = 4
         for track_id in unique_track_ids:
