@@ -147,8 +147,8 @@ def plot_draw_save(y, x, scores, trackers, plot_draw_styles, result_plot_path, p
     for id, id_sort in enumerate(index_sort):
         line = ax.plot(x.tolist(), y[id_sort, :].tolist(),
                        linewidth=line_width,
-                       color=plot_draw_styles[index_sort.numel() - id - 1]['color'],
-                       linestyle=plot_draw_styles[index_sort.numel() - id - 1]['line_style'])
+                       color=plot_draw_styles[id_sort]['color'],
+                       linestyle=plot_draw_styles[id_sort]['line_style'])
 
         plotted_lines.append(line[0])
 
