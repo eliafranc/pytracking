@@ -1,5 +1,6 @@
 import numpy as np
-from pytracking.evaluation.data import Sequence, BaseDataset, SequenceList
+
+from pytracking.evaluation.data import BaseDataset, Sequence, SequenceList
 
 DTYPE = np.dtype(
     [
@@ -35,9 +36,9 @@ class EvDroneDataset(BaseDataset):
         base_sequence = sequence_name[:-2]
         object_id = int(sequence_name.split("_")[-1])
 
-        anno_path = "{}/{}/labels_events_left.npy".format(self.base_path, base_sequence)
+        anno_path = "{}/{}/labels_events_left_test.npy".format(self.base_path, base_sequence)
         gt = np.load(anno_path)
-        gt['track_id'] = gt['track_id'] - min(gt['track_id'])
+        gt["track_id"] = gt["track_id"] - min(gt["track_id"])
         object_specific_gt = gt[gt["track_id"] == object_id - 1]
         starting_frame = int(object_specific_gt[0]["frame"] + self.frame_offset)
         ending_frame = int(object_specific_gt[-1]["frame"])
@@ -70,8 +71,6 @@ class EvDroneDataset(BaseDataset):
                     [float(annotation["x"]), float(annotation["y"]), float(annotation["w"]), float(annotation["h"])]
                 )
         new_annotations = np.array(new_annotations)
-        for i in range(len(new_annotations)):
-            new_annotations[i] = self._inverse_pad_annotation(new_annotations[i])
 
         return new_annotations
 
@@ -90,7 +89,7 @@ class EvDroneDataset(BaseDataset):
         unpad_w = padded_w - w
         unpad_h = padded_h - h
         unpad_x = int(unpad_w / 2)
-        unpad_y = int(unpad_h / 2)
+        unpad_y = int(unpad_h * 0.8)
         return {"x": unpad_x, "y": unpad_y, "w": unpad_w, "h": unpad_h}
 
     def __len__(self):
@@ -362,9 +361,7 @@ class EvDroneDataset(BaseDataset):
             "2024_01_10_170911_recording_029",
         ]
 
-        # TODO: Createa new list where for each sequence, we check how many objects there are and then create a new sequence for each object
-        # instead of 2024_01_10_170509_himo_011 we then get 2024_01_10_170509_himo_011_1, 2024_01_10_170509_himo_011_2, etc.
-        # Assigning of gt etc according to object id can then be done in the _construct_sequence method
+        # Make sure each object in a sequence has a unique gt
         new_sequence_list = []
         for seq in sequence_list:
             anno_path = "{}/{}/labels_events_left.npy".format(self.base_path, seq)

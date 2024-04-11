@@ -1,20 +1,22 @@
 import importlib
 import os
-import numpy as np
-from collections import OrderedDict
-from pytracking.evaluation.environment import env_settings
 import time
-import cv2 as cv
-from pytracking.utils.visdom import Visdom
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
-from pytracking.utils.plotting import draw_figure, overlay_mask
-from pytracking.utils.convert_vot_anno_to_rect import convert_vot_anno_to_rect
-from ltr.data.bounding_box_utils import masks_to_bboxes
-from pytracking.evaluation.multi_object_wrapper import MultiObjectWrapper
+from collections import OrderedDict
 from pathlib import Path
+
+import cv2 as cv
+import matplotlib.patches as patches
+import matplotlib.pyplot as plt
+import numpy as np
 import torch
+
 from evutils.io.reader import EventReader_HDF5
+from ltr.data.bounding_box_utils import masks_to_bboxes
+from pytracking.evaluation.environment import env_settings
+from pytracking.evaluation.multi_object_wrapper import MultiObjectWrapper
+from pytracking.utils.convert_vot_anno_to_rect import convert_vot_anno_to_rect
+from pytracking.utils.plotting import draw_figure, overlay_mask
+from pytracking.utils.visdom import Visdom
 
 _tracker_disp_colors = {
     1: (0, 255, 0),
@@ -361,7 +363,7 @@ class Tracker:
             gray_warped_rgb_image = cv.cvtColor(warped_rgb_image, cv.COLOR_BGR2GRAY)
             start_ts = int(np.floor(timings["t"][frame_number] / 1000))
             events = event_reader.read(start_ts, start_ts + dt_ms)
-            # TODO: make threshold dependent on dt_ms -> 25000 for 2.5ms = 10000 e/ms = 10 Me/s (10^7 e/s)
+            # 10 Me/s (10^7 e/s) cutoff threshold
             ev_threshhold = 10000000 * (dt_ms / 1000)
             if events.shape[0] >= ev_threshhold or events.size == 0:
                 return cv.merge([gray_warped_rgb_image, gray_warped_rgb_image, gray_warped_rgb_image])
@@ -424,7 +426,7 @@ class Tracker:
         event_reader = EventReader_HDF5(event_file)
         homography = np.load(homography_file)
         labels = np.load(label_file)
-        labels['track_id'] = labels['track_id'] - min(labels['track_id'])
+        labels["track_id"] = labels["track_id"] - min(labels["track_id"])
 
         # Get initial frame numbers and indices for labels for each object
         unique_track_ids = np.unique([label["track_id"] for label in labels])
@@ -934,6 +936,8 @@ class Tracker:
             debug: Debug level.
         """
 
+        _rgb_ev_tracker_disp_colors = {0: (255, 162, 0), 1: (101, 208, 119)}
+
         def _create_tensor(
             frame_number,
             rgb_frame_dir,
@@ -1117,13 +1121,13 @@ class Tracker:
             output_boxes[init_frames_for_track_id[min(init_frames_for_track_id.keys())]][obj_id] = (bbox, 1)
             output_masks[init_frames_for_track_id[min(init_frames_for_track_id.keys())]][obj_id] = None
             if vis:
-                initial_tensor = cv.rectangle(
-                    initial_tensor,
-                    (bbox[0], bbox[1]),
-                    (bbox[0] + bbox[2], bbox[1] + bbox[3]),
-                    _tracker_disp_colors[obj_id],
-                    1,
-                )
+                # initial_tensor = cv.rectangle(
+                #     initial_tensor,
+                #     (bbox[0], bbox[1]),
+                #     (bbox[0] + bbox[2], bbox[1] + bbox[3]),
+                #     _rgb_ev_tracker_disp_colors[int(rgb_only)],
+                #     2,
+                # )
                 cv.imwrite(
                     f"{vis_output_dir}/{init_frames_for_track_id[min(init_frames_for_track_id.keys())]:06d}.jpg",
                     initial_tensor,
@@ -1192,23 +1196,23 @@ class Tracker:
                         output_masks[current_frame][obj_id] = out["segmentation"]
 
                     if vis:
-                        for obj_id, bbox, score in bboxes_for_vis:
-                            tensor = cv.rectangle(
-                                tensor,
-                                (bbox[0], bbox[1]),
-                                (bbox[0] + bbox[2], bbox[1] + bbox[3]),
-                                _tracker_disp_colors[obj_id],
-                                1,
-                            )
-                            # cv.putText(
-                            #     tensor,
-                            #     str(round(score, 3)),
-                            #     (bbox[0], bbox[1] - 7),
-                            #     cv.FONT_HERSHEY_SIMPLEX,
-                            #     0.4,
-                            #     _tracker_disp_colors[obj_id],
-                            #     1,
-                            # )
+                        # for obj_id, bbox, score in bboxes_for_vis:
+                        #     tensor = cv.rectangle(
+                        #         tensor,
+                        #         (bbox[0], bbox[1]),
+                        #         (bbox[0] + bbox[2], bbox[1] + bbox[3]),
+                        #         _rgb_ev_tracker_disp_colors[int(rgb_only)],
+                        #         2,
+                        #     )
+                        # cv.putText(
+                        #     tensor,
+                        #     str(round(score, 3)),
+                        #     (bbox[0], bbox[1] - 7),
+                        #     cv.FONT_HERSHEY_SIMPLEX,
+                        #     0.4,
+                        #     _tracker_disp_colors[obj_id],
+                        #     1,
+                        # )
 
                         cv.imwrite(f"{vis_output_dir}/{current_frame:06d}.jpg", tensor)
 

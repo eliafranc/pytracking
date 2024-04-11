@@ -1,13 +1,14 @@
-import numpy as np
+import csv
 import multiprocessing
 import os
 import sys
-import csv
-from itertools import product
 from collections import OrderedDict
-from pytracking.evaluation import Sequence, Tracker
-from ltr.data.image_loader import imwrite_indexed
+from itertools import product
 
+import numpy as np
+
+from ltr.data.image_loader import imwrite_indexed
+from pytracking.evaluation import Sequence, Tracker
 
 PREDICTION_FIELD_NAMES = ["video", "object", "frame_num", "present", "score", "xmin", "xmax", "ymin", "ymax"]
 

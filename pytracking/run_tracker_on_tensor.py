@@ -11,6 +11,11 @@ from pytracking.evaluation.running import run_tensor_dataset
 from pytracking.evaluation import Tracker
 
 
+# run_arguments = {
+#     1: {"rgb_only": True, "delta_t": 10},
+#     3: {"rgb_only": False, "delta_t": 2},
+
+# }
 run_arguments = {
     1: {"rgb_only": True, "delta_t": 10},
     2: {"rgb_only": False, "delta_t": 1},

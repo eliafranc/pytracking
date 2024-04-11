@@ -1,6 +1,6 @@
+import argparse
 import os
 import sys
-import argparse
 
 env_path = os.path.join(os.path.dirname(__file__), "..")
 if env_path not in sys.path:
@@ -89,24 +89,21 @@ def main():
     if args.delta_t != 10:
         assert not args.rgb_only, "Time delta can only be changed when not using RGB frames."
 
-    for sequence in [
-        "2024_01_10_162004_focus_001",
-    ]:
-        run_tensor(
-            args.tracker_name,
-            args.tracker_param,
-            sequence,
-            f"{PATH_TO_DATA}/{sequence}/{TIMINGS}",
-            f"{PATH_TO_DATA}/{sequence}/{RGB_FRAME_DIR}",
-            f"{PATH_TO_DATA}/{sequence}/{EVENT_FILE}",
-            f"{PATH_TO_DATA}/{sequence}/{HOMOGRAPHY_FILE}",
-            f"{PATH_TO_DATA}/{sequence}/{LABEL_FILE}",
-            delta_t=args.delta_t,
-            debug=args.debug,
-            vis=args.visualize,
-            rgb_only=args.rgb_only,
-            save_results=args.save_results,
-        )
+    run_tensor(
+        args.tracker_name,
+        args.tracker_param,
+        args.sequence,
+        f"{PATH_TO_DATA}/{args.sequence}/{TIMINGS}",
+        f"{PATH_TO_DATA}/{args.sequence}/{RGB_FRAME_DIR}",
+        f"{PATH_TO_DATA}/{args.sequence}/{EVENT_FILE}",
+        f"{PATH_TO_DATA}/{args.sequence}/{HOMOGRAPHY_FILE}",
+        f"{PATH_TO_DATA}/{args.sequence}/{LABEL_FILE}",
+        delta_t=args.delta_t,
+        debug=args.debug,
+        vis=args.visualize,
+        rgb_only=args.rgb_only,
+        save_results=args.save_results,
+    )
 
 
 if __name__ == "__main__":
