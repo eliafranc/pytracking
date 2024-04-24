@@ -338,7 +338,6 @@ class Tracker:
         # segmentation[i] is the multi-label segmentation mask for frame i (numpy array)
 
         output = {"target_bbox": [], "time": [], "segmentation": [], "object_presence_score": []}
-        sequence_name = seq["sequence_name"]
         timings_file = seq["timings_file"]
         rgb_frame_dir = seq["rgb_frame_dir"]
         event_file = seq["event_file"]
@@ -363,7 +362,8 @@ class Tracker:
             gray_warped_rgb_image = cv.cvtColor(warped_rgb_image, cv.COLOR_BGR2GRAY)
             start_ts = int(np.floor(timings["t"][frame_number] / 1000))
             events = event_reader.read(start_ts, start_ts + dt_ms)
-            # 10 Me/s (10^7 e/s) cutoff threshold
+
+            # Manage potential event overflow: 10 Me/s (10^7 e/s) cutoff threshold
             ev_threshhold = 10000000 * (dt_ms / 1000)
             if events.shape[0] >= ev_threshhold or events.size == 0:
                 return cv.merge([gray_warped_rgb_image, gray_warped_rgb_image, gray_warped_rgb_image])
@@ -1121,13 +1121,13 @@ class Tracker:
             output_boxes[init_frames_for_track_id[min(init_frames_for_track_id.keys())]][obj_id] = (bbox, 1)
             output_masks[init_frames_for_track_id[min(init_frames_for_track_id.keys())]][obj_id] = None
             if vis:
-                # initial_tensor = cv.rectangle(
-                #     initial_tensor,
-                #     (bbox[0], bbox[1]),
-                #     (bbox[0] + bbox[2], bbox[1] + bbox[3]),
-                #     _rgb_ev_tracker_disp_colors[int(rgb_only)],
-                #     2,
-                # )
+                initial_tensor = cv.rectangle(
+                    initial_tensor,
+                    (bbox[0], bbox[1]),
+                    (bbox[0] + bbox[2], bbox[1] + bbox[3]),
+                    _rgb_ev_tracker_disp_colors[int(rgb_only)],
+                    2,
+                )
                 cv.imwrite(
                     f"{vis_output_dir}/{init_frames_for_track_id[min(init_frames_for_track_id.keys())]:06d}.jpg",
                     initial_tensor,
@@ -1189,30 +1189,21 @@ class Tracker:
                             output_boxes[current_frame][obj_id] = (state, out["score"][obj_id])
 
                     for obj_id in sequence_obj_ids:
-                        if output_boxes[current_frame][obj_id] == None:
+                        if output_boxes[current_frame][obj_id] is None:
                             del output_boxes[current_frame][obj_id]
 
                     if "segmentation" in out:
                         output_masks[current_frame][obj_id] = out["segmentation"]
 
                     if vis:
-                        # for obj_id, bbox, score in bboxes_for_vis:
-                        #     tensor = cv.rectangle(
-                        #         tensor,
-                        #         (bbox[0], bbox[1]),
-                        #         (bbox[0] + bbox[2], bbox[1] + bbox[3]),
-                        #         _rgb_ev_tracker_disp_colors[int(rgb_only)],
-                        #         2,
-                        #     )
-                        # cv.putText(
-                        #     tensor,
-                        #     str(round(score, 3)),
-                        #     (bbox[0], bbox[1] - 7),
-                        #     cv.FONT_HERSHEY_SIMPLEX,
-                        #     0.4,
-                        #     _tracker_disp_colors[obj_id],
-                        #     1,
-                        # )
+                        for obj_id, bbox, score in bboxes_for_vis:
+                            tensor = cv.rectangle(
+                                tensor,
+                                (bbox[0], bbox[1]),
+                                (bbox[0] + bbox[2], bbox[1] + bbox[3]),
+                                _rgb_ev_tracker_disp_colors[int(rgb_only)],
+                                2,
+                            )
 
                         cv.imwrite(f"{vis_output_dir}/{current_frame:06d}.jpg", tensor)
 
