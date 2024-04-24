@@ -8,14 +8,6 @@ if env_path not in sys.path:
 
 from pytracking.evaluation import Tracker
 
-"""
-log:
-    - 2024_01_10_120347_10km_001
-    - 2024_01_10_153109_dji_000
-    - 2024_01_10_112814_drone_000
-    - 2024_01_10_162004_focus_000 (2 drones, 1 barely visible, good results)
-"""
-
 PATH_TO_DATA = "/home/efranc/data"
 TIMINGS = "frames_ts.csv"
 RGB_FRAME_DIR = "frames"
