@@ -11,8 +11,6 @@ from pytracking.evaluation import Sequence, Tracker
 from pytracking.evaluation.datasets import get_dataset
 from pytracking.evaluation.environment import env_settings
 
-# track_id_2_name = {1: "RGB", 2: "RGB + EV 2ms"}
-# track_id_2_name = {1: "RGB", 2: "RGB + EV 5ms", 3: "RGB + EV 10ms", 4: "RGB + EV 2ms"}
 track_id_2_name = {
     1: "RGB",
     2: "RGB + EV 1ms",

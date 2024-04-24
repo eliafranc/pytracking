@@ -1,7 +1,7 @@
-import os
-import sys
 import argparse
 import importlib
+import os
+import sys
 
 env_path = os.path.join(os.path.dirname(__file__), "..")
 if env_path not in sys.path:
@@ -11,19 +11,14 @@ from pytracking.analysis.playback_results import playback_results
 from pytracking.evaluation import Tracker
 from pytracking.evaluation.datasets import get_dataset
 
-
-# track_id_2_name = {
-#     1: "RGB",
-#     2: "RGB + EV 2ms",
-#     3: "RGB + EV 5ms",
-#     4: "RGB + EV 10ms",
-#     5: "RGB + EV 15ms",
-#     6: "RGB + EV 20ms",
-# }
 track_id_2_name = {
     1: "RGB",
-    2: "RGB + EV 2ms",
-    3: "RGB + EV 5ms"
+    2: "RGB + EV 1ms",
+    3: "RGB + EV 2ms",
+    4: "RGB + EV 5ms",
+    5: "RGB + EV 10ms",
+    6: "RGB + EV 15ms",
+    7: "RGB + EV 20ms",
 }
 
 
