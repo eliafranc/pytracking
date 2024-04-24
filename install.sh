@@ -39,6 +39,13 @@ python3 -c "from ltr.admin.environment import create_default_local_file; create_
 
 echo ""
 echo ""
+echo "****************** Cloning evutils Repository ******************"
+git clone --recurse-submodules git@git.ee.ethz.ch:pbl/research/event-camera/evutils.git
+cd evutils
+pip install -e .
+cd ..
+echo ""
+echo ""
 echo "****************** Installation complete! ******************"
 
 echo ""
