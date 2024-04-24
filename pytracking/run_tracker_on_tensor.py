@@ -1,21 +1,21 @@
+import argparse
 import os
 import sys
-import argparse
+
 import yaml
 
 env_path = os.path.join(os.path.dirname(__file__), "..")
 if env_path not in sys.path:
     sys.path.append(env_path)
 
-from pytracking.evaluation.running import run_tensor_dataset
 from pytracking.evaluation import Tracker
+from pytracking.evaluation.running import run_tensor_dataset
 
-
-# run_arguments = {
-#     1: {"rgb_only": True, "delta_t": 10},
-#     3: {"rgb_only": False, "delta_t": 2},
-
-# }
+""" Input Representation Configurations
+If the following run_arguments are used, the tracker will be run on the sequences in the ststephan_sequences.yaml file
+for all of the 7 different configurations. If only one sequence should be evaluated with a specific configuration,
+make sure to remove the for loop that iterates over the run_arguments in the main function.
+"""
 run_arguments = {
     1: {"rgb_only": True, "delta_t": 10},
     2: {"rgb_only": False, "delta_t": 1},
