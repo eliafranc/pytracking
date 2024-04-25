@@ -13,7 +13,11 @@ echo ""
 echo "****************** RTS50 Network ******************"
 gdown https://drive.google.com/uc\?id\=1MyrVu4Liz5aNdm_0j7vCg_Ya-iRYgmUb -O pytracking/networks/rts50.pth
 gdown https://drive.google.com/uc\?id\=19ElXtYFLxN4pIP0n7DgQtAYewsyVwMN- -O pytracking/networks/sta.pth.tar
-
+echo ""
+echo ""
+echo ""
+echo "****************** ToMP50 Network ******************"
+gdown 1dU1IYIv5x_7iOUVTgh8uOq36POFOQBWT -O pytracking/networks/tomp50.pth.tar
 # echo ""
 # echo ""
 # echo ""
