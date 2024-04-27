@@ -5,8 +5,12 @@ echo ""
 echo ""
 echo "****************** Downloading networks ******************"
 mkdir pytracking/networks
-
-
+echo ""
+echo ""
+echo ""
+echo "****************** Fix gdown installation ******************"
+# Problems when downloading from shared google drive links, https://github.com/wkentaro/gdown/issues/43
+pip install -U --no-cache-dir gdown --pre
 echo ""
 echo ""
 echo ""
@@ -37,17 +41,17 @@ gdown 1dU1IYIv5x_7iOUVTgh8uOq36POFOQBWT -O pytracking/networks/tomp50.pth.tar
 
 echo ""
 echo ""
-echo "****************** Setting up environment ******************"
-python3 -c "from pytracking.evaluation.environment import create_default_local_file; create_default_local_file()"
-python3 -c "from ltr.admin.environment import create_default_local_file; create_default_local_file()"
-
-echo ""
-echo ""
 echo "****************** Cloning evutils Repository ******************"
 git clone --recurse-submodules git@git.ee.ethz.ch:pbl/research/event-camera/evutils.git
 cd evutils
 pip install -e .
 cd ..
+echo ""
+echo ""
+
+echo "****************** Setting up environment ******************"
+python3 -c "from pytracking.evaluation.environment import create_default_local_file; create_default_local_file()"
+python3 -c "from ltr.admin.environment import create_default_local_file; create_default_local_file()"
 echo ""
 echo ""
 echo "****************** Installation complete! ******************"

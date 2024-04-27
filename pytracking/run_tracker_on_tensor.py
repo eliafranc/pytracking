@@ -52,7 +52,7 @@ def run_tracker_on_tensor(
 
     visdom_info = {} if visdom_info is None else visdom_info
 
-    dataset = yaml.safe_load(open("experiments/ststephan_sequences.yaml"))["sequences"]
+    dataset = yaml.safe_load(open("ststephan_sequences.yaml"))["sequences"]
 
     if sequence is not None:
         dataset = [sequence]

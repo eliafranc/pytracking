@@ -73,7 +73,7 @@ def main():
     parser.set_defaults(visualize=False)
     parser.add_argument("--rgb_only", dest="rgb_only", action="store_true", help="Use only RGB frames")
     parser.set_defaults(rgb_only=False)
-    parser.add_argument("--save_results", dest="save_results", action="store_true", help="Visualize bounding boxes")
+    parser.add_argument("--save_results", dest="save_results", action="store_true", help="Save bounding boxes")
     parser.set_defaults(save_results=False)
 
     args = parser.parse_args()
